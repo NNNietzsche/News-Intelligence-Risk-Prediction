@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block page_sidebar %}
+<aside class="sidebar page-rail" data-modules="{{ module_codes_csv }}" data-page-path="{{ page_path }}">
+  {# Modified by DingJiaye: 2026-08-27 — 由情报智能体完成相关性与风险校验，不用浏览器关键词隐藏板块。 #}
+  <div class="daily-agent-side-status" aria-label="情报智能体状态">
+    <span aria-hidden="true"></span> AI 情报代理 · 自动核验
+  </div>
+  <h2 class="daily-index-title">索引</h2>
+  <ul class="run-list daily-index-list" id="daily-index-list">
+    {% for code, name in modules.items() %}
+    {% set run = run_map.get(code) %}
+    <li>
+      <a class="mod-name mod-jump" href="#module-panel-{{ code }}" data-module="{{ code }}">{{ name }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="daily-sidebar-footer">
+    <div class="daily-sidebar-actions">
+      <a class="daily-export sidebar-action-primary" href="/api/v1/export/pdf?report_date={{ report_date }}&module_codes={{ module_codes_csv }}&window_hours={{ window_hours }}">导出 PDF</a>
+      <button type="button" class="daily-refresh sidebar-action-secondary" id="btn-run-pipeline">刷新资讯</button>
+    </div>
+    <p class="hint" id="pipeline-msg">{{ collect_label }}</p>
+  </div>
+</aside>
+{% endblock %}
+
+{% block content %}
+<main class="layout content-shell daily-agent-canvas" data-modules="{{ module_codes_csv }}" data-page-path="{{ page_path }}">
+  <section class="content">
+    {% if day_tabs %}
+    <nav class="day-tabs" aria-label="近七日日期">
+      {% for tab in day_tabs %}
+      <a
+        href="{{ tab.href }}{% if selected_module %}&module_code={{ selected_module }}{% endif %}"
+        class="day-tab {% if tab.active %}active{% endif %}"
+        {% if tab.active %}aria-current="page"{% endif %}
+      >{{ tab.label }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+    <div class="daily-page-caption">
+      <span>{% if active_page == 'news_7x24' %}7×24 小时资讯时间轴{% else %}{{ page_title }}{% endif %}</span>
+      <div class="daily-page-caption-actions">
+        <span class="daily-agent-verified">AI 自动校验 · 仅展示可核验事件</span>
+      </div>
+    </div>
+    {# Modified by DingJiaye: 2026-08-27 — 日报升级为风险情报智能体工作台，保留原有采集、筛选与三板块数据结构。 #}
+    <section class="daily-agent-hero" aria-label="风险情报智能体工作台">
+      <div class="daily-agent-identity">
+        <span class="daily-agent-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <span class="daily-agent-eyebrow">RISK INTELLIGENCE AGENT</span>
+          <h1>{% if active_page == 'news_7x24' %}实时风险情报智能体{% else %}风险情报智能体{% endif %}</h1>
+          <p>持续监测公开信源，将事件、风险标签与可执行关注点汇入同一任务流。</p>
+        </div>
+      </div>
+      <div class="daily-agent-actions">
+        <span class="daily-agent-state"><b></b> 监测中</span>
+        <span class="daily-agent-verified">AI 相关性校验</span>
+        <button type="button" class="daily-agent-secondary" data-manual-news-open>添加新闻</button>
+        <button type="button" class="daily-agent-primary" data-agent-refresh>更新情报</button>
+      </div>
+      <div class="daily-agent-track" aria-label="智能体处理流程">
+        <span class="is-done"><b>01</b>采集信源</span>
+        <span class="is-done"><b>02</b>识别主体</span>
+        <span class="is-active"><b>03</b>风险推演</span>
+        <span><b>04</b>人工复核</span>
+      </div>
+      {# Modified by DingJiaye: 2026-08-28 — 合并全局风险概览与 Agent 工作流，减少重复大卡片。 #}
+      <div class="agent-overview-inline" id="agent-workflow" aria-labelledby="global-risk-overview">
+        <div class="agent-overview-inline-head"><div><span>REAL-TIME MONITORING · {{ report_date|replace('-', '.') }}</span><h2 id="global-risk-overview">实时风险监测概览</h2></div><em>数据随入库资讯更新</em></div>
+        <div class="agent-overview-metrics daily-monitor-metrics"><div class="metric-events"><b>{{ agent_global_overview.events }}</b><span>新事件</span><small>已纳入今日情报流</small></div><div class="metric-alerts"><b>{{ agent_global_overview.alerts }}</b><span>需关注</span><small>关注与风险事件</small></div><div class="metric-risk"><b>{{ agent_global_overview.risks }}</b><span>风险</span><small>高风险事件</small></div></div>
+        <div class="agent-overview-status daily-monitor-status"><div><strong>●</strong><span>{% if agent_global_overview.alerts %}发现 {{ agent_global_overview.alerts }} 条需关注事件{% else %}当前未发现需关注事件{% endif %}</span></div></div>
+      </div>
+    </section>
+    {% if active_page == 'daily_news' and daily_summary and daily_summary.overview %}
+    <section class="daily-summary-report" aria-labelledby="daily-summary-title">
+      <div class="daily-summary-head">
+        <div>
+          <span class="daily-summary-eyebrow">AGENT BRIEF · 今日任务摘要</span>
+          <h2 id="daily-summary-title">今日风险情报概览</h2>
+        </div>
+        <span class="daily-summary-meta">{{ daily_summary.entry_count }} 条资讯{% if daily_summary.source == 'deepseek' %} · AI 汇总{% else %} · 自动汇总{% endif %}</span>
+      </div>
+      <p class="daily-summary-overview">{{ daily_summary.overview }}</p>
+      <div class="daily-summary-sections">
+        {% for section in daily_summary.sections %}
+        <article class="daily-summary-section daily-summary-{{ section.code|lower }}">
+          <h3>{{ section.name }}</h3>
+          <p>{{ section.summary }}</p>
+          {% if section.important_points %}
+          <div class="daily-summary-points">
+            <span>重要事项</span>
+            <ul>{% for point in section.important_points %}<li>{{ point }}</li>{% endfor %}</ul>
+          </div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+    <div class="news-selection-toolbar" id="daily-news-selection-toolbar" hidden><span id="daily-news-selection-count">已选择 0 条新闻</span><button type="button" id="daily-news-send-selected">发送选中新闻</button></div>
+    <div class="news-filter-panel" id="news-filter-panel" hidden>
+    <div class="news-filter-panel-head">
+      <div>
+        <strong>筛选新闻</strong>
+        <span>可多选，同一组内满足任一条件</span>
+      </div>
+      <button type="button" class="news-filter-clear" id="news-filter-clear" disabled>清除全部</button>
+    </div>
+    <div class="news-filter-group news-filter-group-risk">
+    <span class="news-filter-label">风险类型</span>
+    <nav class="news-risk-filters" aria-label="风险类型筛选">
+      <button type="button" class="news-risk-filter" data-news-risk="信贷风险">信贷风险</button>
+      <button type="button" class="news-risk-filter" data-news-risk="市场风险">市场风险</button>
+      <button type="button" class="news-risk-filter" data-news-risk="流动性与资产负债">流动性与资产负债</button>
+      <button type="button" class="news-risk-filter" data-news-risk="合规与反洗钱">合规与反洗钱</button>
+      <button type="button" class="news-risk-filter" data-news-risk="国别与地缘">国别与地缘</button>
+      <button type="button" class="news-risk-filter" data-news-risk="操作与网络安全">操作与网络安全</button>
+      <button type="button" class="news-risk-filter" data-news-risk="治理与信息披露">治理与信息披露</button>
+    </nav>
+    </div>
+    <div class="news-filter-group news-filter-group-level">
+    <span class="news-filter-label">风险等级</span>
+    <nav class="news-level-filters" aria-label="风险等级筛选">
+      <button type="button" class="news-level-filter level-low" data-news-level="低">低</button>
+      <button type="button" class="news-level-filter level-medium" data-news-level="中">中</button>
+      <button type="button" class="news-level-filter level-high" data-news-level="高">高</button>
+      <button type="button" class="news-level-filter level-extreme" data-news-level="极高">极高</button>
+    </nav>
+    </div>
+    {% if active_page == 'news_7x24' %}
+    <nav class="timeline-category-filters" aria-label="资讯栏目筛选">
+      <button type="button" class="timeline-category-filter active" data-timeline-module="all">全部栏目</button>
+      {% for code, name in modules.items() %}
+      <button type="button" class="timeline-category-filter" data-timeline-module="{{ code }}">{{ name }}</button>
+      {% endfor %}
+    </nav>
+    {% endif %}
+    </div>
+
+    {% if active_page == 'news_7x24' %}
+    <section class="news-timeline" aria-label="近七日新闻时间轴">
+      {% for e in timeline_entries %}
+      <article class="timeline-item" data-module="{{ e.module_code }}" data-risk-tags="{{ e.risk_tags|join('|') }}" data-risk-level="{{ e.risk_level }}" data-news-search="{{ (e.title or '') ~ ' ' ~ (e.overview or '') ~ ' ' ~ (e.source_title or '') ~ ' ' ~ (e.published_at|string) ~ ' ' ~ (e.risk_tags|join(' ')) ~ ' ' ~ modules.get(e.module_code, '') }}">
+        <time class="timeline-time">{% if e.published_at %}{{ e.published_at }}{% else %}发布时间待核验{% endif %}</time>
+        <div class="timeline-node" aria-hidden="true"></div>
+        <div class="timeline-card">
+          <h3 class="risk-event-title"><span class="module-title-prefix module-chip-{{ e.module_code|lower }}">{{ modules.get(e.module_code, e.module_code) }}</span>{{ e.title }}{% if e.risk_level in ('中', '高', '极高') %} <span class="risk-level-tag risk-tag-{{ e.risk_level }}">{{ '关注' if e.risk_level == '中' else '风险' }}</span>{% endif %}</h3>
+          {% if e.overview %}
+          <div class="entry-news-detail"><span class="entry-news-detail-label">内容详情</span><p>{{ e.overview }}</p></div>
+          {% endif %}
+          {% if e.risk_tags %}
+          <div class="news-risk-tags" aria-label="风险类型标签">{% for tag in e.risk_tags %}<span class="news-risk-tag">{{ tag }}</span>{% endfor %}</div>
+          {% endif %}
+          {% if e.risk_reasoning and e.risk_reasoning.show %}
+          <p class="risk-tip"><span>风险提示</span>{{ e.risk_reasoning.transmission }}</p>
+          {% endif %}
+          <footer class="risk-event-footer">
+            {% if e.source_url %}<a class="risk-event-source" href="{{ e.source_url }}" target="_blank" rel="noopener noreferrer">{{ e.source_title or '查看原始来源' }}</a>{% else %}<span class="risk-event-source muted">来源未标注</span>{% endif %}
+          </footer>
+        </div>
+      </article>
+      {% else %}
+      <div class="module-status"><p class="empty-module">{{ empty_hint }}</p></div>
+      {% endfor %}
+    </section>
+    {% else %}
+    {% for code, name in modules.items() %}
+    {% if not selected_module or selected_module == code %}
+    {# Modified by DingJiaye: 2026-08-28 — 每个新闻板块固定使用独立色码，便于快速扫描。 #}
+    <div class="module-panel module-panel-{{ code|lower }}" id="module-panel-{{ code }}">
+      <div class="module-header">
+        <h2>{{ name }}</h2>
+      </div>
+
+      {% set mod_entries = grouped_entries.get(code, []) %}
+      {% set ui = module_ui.get(code, {}) %}
+      {% if mod_entries %}
+      {% if ui.get('message') %}<p class="module-recent-fallback">{{ ui.get('message') }}（当日暂无新增）</p>{% endif %}
+      <div class="entry-grid risk-event-list">
+        {% for e in mod_entries %}
+        {# Modified by DingJiaye: 2026-08-28 — 以左侧风险色条直观区分低/关注/风险新闻。 #}
+        <article class="entry-card risk-event-card level-border-{{ e.risk_level }}" data-risk-tags="{{ e.risk_tags|join('|') }}" data-risk-level="{{ e.risk_level }}" data-news-search="{{ (e.title or '') ~ ' ' ~ (e.overview or '') ~ ' ' ~ (e.source_title or '') ~ ' ' ~ (e.published_at|string) ~ ' ' ~ (e.risk_tags|join(' ')) ~ ' ' ~ name }}">
+          <div class="risk-event-top">
+            <label class="news-select"><input class="daily-news-select" type="checkbox" value="{{ e.id }}" aria-label="选择新闻：{{ e.title }}" /><span></span></label>
+            {% if e.category_tag %}
+            <span class="risk-category-chip">{{ e.category_tag }}</span>
+            {% elif e.risk_category %}
+            <span class="risk-category-chip">{{ e.risk_category }}</span>
+            {% else %}
+            <span class="risk-category-chip">{{ name }}</span>
+            {% endif %}
+            {% if code == "C" and e.related_company %}
+            <span class="risk-company-chip">{{ e.related_company }}</span>
+            {% endif %}
+            {% if e.published_at %}
+            <time class="risk-event-time">{{ e.published_at }}</time>
+            {% endif %}
+          </div>
+          <time class="daily-entry-time">{% if e.published_at %}{{ e.published_at|tokyo_time("%m/%d %H:%M") }}{% else %}发布时间待核验{% endif %}</time>
+          <h3 class="risk-event-title"><span class="module-title-prefix module-chip-{{ code|lower }}">{{ name }}</span>{{ e.title }}{% if e.risk_level in ('中', '高', '极高') %} <span class="risk-level-tag risk-tag-{{ e.risk_level }}">{{ '关注' if e.risk_level == '中' else '风险' }}</span>{% endif %}</h3>
+          {% if e.overview %}
+          <div class="entry-news-detail">
+            <span class="entry-news-detail-label">内容详情</span>
+            <p>{{ e.overview }}</p>
+          </div>
+          {% endif %}
+          {% if e.risk_tags %}
+          <div class="news-risk-tags" aria-label="风险类型标签">
+            {% for tag in e.risk_tags %}<span class="news-risk-tag">{{ tag }}</span>{% endfor %}
+          </div>
+          {% endif %}
+          {% if e.risk_reasoning and e.risk_reasoning.show %}
+          <p class="risk-tip"><span>风险提示</span>{{ e.risk_reasoning.transmission }}</p>
+          {% endif %}
+          <footer class="risk-event-footer">
+            {% if e.source_url %}
+            <a class="risk-event-source" href="{{ e.source_url }}" target="_blank" rel="noopener noreferrer">{{ e.source_title or '查看原始来源' }}</a>
+            {% else %}
+            <span class="risk-event-source muted">来源未标注</span>
+            {% endif %}
+          </footer>
+          <div class="chart-host" id="chart-entry-{{ e.id }}"></div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="module-status status-{{ ui.get('state', 'idle') }}">
+        <p class="empty-module">{{ ui.get('message', '暂无条目。') }}</p>
+        {% if ui.get('state') == 'failed' %}
+        <button type="button" class="btn small secondary btn-reload-module" data-module="{{ code }}">重新加载</button>
+        {% if ui.get('detail') %}<p class="hint status-detail">{{ ui.get('detail') }}</p>{% endif %}
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+    {% if not entries and active_page != 'news_7x24' %}
+    <p class="empty">{{ empty_hint }}</p>
+    {% endif %}
+    <p class="news-search-empty" id="news-search-empty" hidden>未找到匹配的新闻，请尝试标题关键词、来源名称或日期（例如 2026-08-19）。</p>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="/static/js/news_risk_filters.js?v=20260828-1"></script>
+<script>
+  window.REPORT_DATE = "{{ report_date }}";
+  window.PIPELINE_MODULES = "{{ module_codes_csv }}".split(",").filter(Boolean);
+  window.NEWS_WINDOW_HOURS = {{ window_hours | int }};
+  window.ENTRY_CHARTS = {{ entry_charts_json | safe }};
+  window.AUTO_BACKFILL = {{ 'true' if auto_backfill else 'false' }};
+  window.ACTIVE_PAGE = "{{ active_page }}";
+  window.TOKYO_TODAY = "{{ tokyo_today or report_date }}";
+  window.MANUAL_NEWS_CONTEXT = {kind: "daily", reportDate: "{{ report_date }}"};
+  // Modified by DingJiaye: 2026-08-28 — 仅将关注/风险新闻作为 Agent 主动发现提示。
+  window.AGENT_PROACTIVE_FINDINGS = [
+    {% for entry in entries if entry.risk_level in ('中', '高', '极高') %}
+    {title: {{ entry.title|tojson }}},
+    {% endfor %}
+  ];
+  window.AGENT_PROACTIVE_URL = "/daily-news?report_date={{ report_date }}";
+</script>
+<script>
+  (function () {
+    // Modified by DingJiaye: 2026-08-27 — 智能体快捷指令复用既有筛选/采集能力，
+    // 避免再维护一套会造成状态不同步的按钮逻辑。
+    var agentFilter = document.querySelector("[data-agent-filter]");
+    var agentRefresh = document.querySelector("[data-agent-refresh]");
+    if (agentFilter) agentFilter.addEventListener("click", function () {
+      var originalFilter = document.getElementById("news-filter-toggle");
+      if (originalFilter) originalFilter.click();
+    });
+    if (agentRefresh) agentRefresh.addEventListener("click", function () {
+      var originalRefresh = document.getElementById("btn-run-pipeline");
+      if (originalRefresh) originalRefresh.click();
+    });
+    var toggle = document.getElementById("news-filter-toggle");
+    var panel = document.getElementById("news-filter-panel");
+    if (toggle && panel) {
+      var panelKey = "riskintel:news-filter-panel:v1:" + window.location.pathname;
+      function placePanel() {
+        if (panel.hidden) return;
+        var rect = toggle.getBoundingClientRect();
+        var panelWidth = panel.offsetWidth || 325;
+        var left = Math.max(12, Math.min(rect.right - panelWidth, window.innerWidth - panelWidth - 12));
+        panel.style.top = Math.min(rect.bottom + 8, window.innerHeight - 12) + "px";
+        panel.style.left = left + "px";
+      }
+      try {
+        var savedOpen = window.localStorage.getItem(panelKey) === "open";
+        panel.hidden = !savedOpen;
+        toggle.setAttribute("aria-expanded", String(savedOpen));
+        toggle.classList.toggle("active", savedOpen);
+        placePanel();
+      } catch (e) { /* ignore */ }
+      toggle.addEventListener("click", function () {
+        var willOpen = panel.hidden;
+        panel.hidden = !willOpen;
+        toggle.setAttribute("aria-expanded", String(willOpen));
+        toggle.classList.toggle("active", willOpen);
+        placePanel();
+        try { window.localStorage.setItem(panelKey, willOpen ? "open" : "closed"); } catch (e) { /* ignore */ }
+      });
+      window.addEventListener("resize", placePanel);
+      window.addEventListener("scroll", placePanel, true);
+      document.addEventListener("click", function (event) {
+        if (!panel.hidden && !panel.contains(event.target) && !toggle.contains(event.target)) {
+          panel.hidden = true;
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.classList.remove("active");
+          try { window.localStorage.setItem(panelKey, "closed"); } catch (e) { /* ignore */ }
+        }
+      });
+    }
+  }());
+</script>
+{% if active_page == 'news_7x24' %}
+<script>
+  (function () {
+    var cards = Array.prototype.slice.call(document.querySelectorAll(".timeline-item"));
+    var buttons = Array.prototype.slice.call(document.querySelectorAll(".timeline-category-filter"));
+    if (!cards.length) return;
+    window.filterNewsTimeline = function (code) {
+      var selected = code || "all";
+      var visible = 0;
+      cards.forEach(function (card) {
+        var show = selected === "all" || card.getAttribute("data-module") === selected;
+        card.setAttribute("data-module-match", show ? "true" : "false");
+        if (show) visible += 1;
+      });
+      if (window.applyNewsRiskFilter) window.applyNewsRiskFilter();
+      buttons.forEach(function (button) {
+        button.classList.toggle("active", button.getAttribute("data-timeline-module") === selected);
+      });
+      var empty = document.getElementById("timeline-category-empty");
+      if (empty) empty.hidden = visible > 0;
+      if (selected !== "all" && history.replaceState) {
+        history.replaceState(null, "", "#module-panel-" + selected);
+      }
+    };
+    buttons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        window.filterNewsTimeline(button.getAttribute("data-timeline-module"));
+      });
+    });
+    var match = (window.location.hash || "").match(/^#module-panel-(.+)$/);
+    if (match) window.filterNewsTimeline(decodeURIComponent(match[1]));
+  }());
+</script>
+{% endif %}
+{% endblock %}

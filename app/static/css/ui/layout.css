@@ -1,0 +1,225 @@
+/*
+ * RiskIntel 通用布局覆盖层
+ * 负责：顶栏、侧边栏、页面分栏与跨页面响应式布局。
+ * 修改记录
+ * - 2026-08-25 | DingJiaye | 新建布局维护入口；跨页面布局改动统一放在此文件。
+ * - 2026-08-26 | DingJiaye | 增加低干扰页面进入、卡片与控件反馈动效。
+ *
+ * 说明：现有布局仍由 dashboard.css 兼容层提供，后续规则逐步迁移至本文件。
+ */
+
+/* --------------------------------------------------------------------------
+ * Motion layer
+ * 负责：不改变信息层级的页面进入、滚动呈现与按钮反馈。
+ * JS 只为命中的内容加 class；用户启用“减少动态效果”时全部关闭。
+ * Modified by DingJiaye: 2026-08-26.
+ * -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-reveal {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--motion-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .motion-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    will-change: auto;
+  }
+
+  .motion-press {
+    transition:
+      transform 150ms ease,
+      box-shadow 180ms ease,
+      background-color 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .motion-press:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .motion-press.is-pressed {
+    transform: translateY(1px) scale(0.985);
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-reveal,
+  .motion-press {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * AI Intelligence OS visual system
+ * 负责：全站智能体工作台外壳、导航、任务面板与通用控件质感。
+ * Modified by DingJiaye: 2026-08-27.
+ * -------------------------------------------------------------------------- */
+
+body.app-agent-shell {
+  --bg-page: var(--ui-canvas);
+  --bg-panel: var(--ui-surface);
+  --bg-card: #f8fbfe;
+  --text-primary: var(--ui-ink);
+  --text-muted: var(--ui-muted);
+  --accent: var(--ui-primary);
+  --accent-hover: var(--ui-primary-strong);
+  --border: var(--ui-border);
+  background:
+    radial-gradient(960px 560px at 82% -12%, rgba(107, 160, 207, .18), transparent 66%),
+    radial-gradient(760px 440px at 12% 112%, rgba(199, 154, 88, .10), transparent 70%),
+    var(--ui-canvas);
+  color: var(--ui-ink);
+}
+
+body.app-agent-shell::before {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 62px 0 0;
+  pointer-events: none;
+  opacity: .36;
+  background-image: linear-gradient(rgba(37, 77, 112, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 77, 112, .045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.app-agent-shell .top-bar {
+  height: 72px;
+  min-height: 72px;
+  padding: 0 28px;
+  border: 0;
+  color: #eff6ff;
+  background: linear-gradient(104deg, var(--ui-navy), #173552 62%, #245170);
+  box-shadow: 0 5px 24px rgba(11, 27, 45, .22);
+}
+
+.app-agent-shell .brand { display: inline-flex; align-items: center; gap: 11px; min-width: 315px; }
+.app-agent-shell .brand-bank-logo {
+  display: block;
+  width: 255px;
+  height: 52px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 5px;
+  background: #fff;
+}
+.brand-copy { display: grid; gap: 2px; }
+.app-agent-shell .brand-title { color: #fff; font-family: "Abril Fatface", Georgia, serif; font-size: 25px; line-height: .95; letter-spacing: -.5px; }
+.app-agent-shell .brand-tagline { color: #b8cadb; font-size: 10px; line-height: 1.1; letter-spacing: .45px; }
+.brand-orb { position: relative; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid rgba(184, 211, 234, .55); border-radius: 50%; box-shadow: inset 0 0 12px rgba(133, 193, 236, .22), 0 0 16px rgba(101, 179, 230, .2); }
+.brand-orb::before, .brand-orb::after { content: ""; position: absolute; border: 1px solid rgba(132, 193, 233, .45); border-radius: 50%; }
+.brand-orb::before { width: 18px; height: 7px; transform: rotate(-28deg); }
+.brand-orb::after { width: 7px; height: 19px; transform: rotate(28deg); }
+.brand-orb i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #e5be7c; box-shadow: 0 0 8px #f1c982; }
+.brand-orb i:nth-child(1) { transform: translate(-7px, -5px); }.brand-orb i:nth-child(2) { transform: translate(8px, 2px); }.brand-orb i:nth-child(3) { transform: translate(-1px, 8px); }
+
+.app-agent-shell .main-nav { gap: 4px; }
+.app-agent-shell .nav-link { position: relative; padding: 9px 13px; border-radius: 9px; color: #aec0d0; font-size: 14px; transition: color .22s ease, background .22s ease, transform .22s ease; }
+.app-agent-shell .nav-link:hover { color: #fff; background: rgba(255,255,255,.08); transform: translateY(-1px); }
+.app-agent-shell .nav-link.active { color: #fff; background: rgba(255,255,255,.12); font-weight: 700; }
+.app-agent-shell .nav-link.active::after { content: ""; position: absolute; right: 14px; bottom: 4px; left: 14px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #81bee9, #e8bd78); }
+.app-agent-shell .header-tools { display: flex; align-items: center; justify-content: flex-end; min-width: 315px; }
+.agent-command-trigger { display: inline-grid; grid-template-columns: auto auto; column-gap: 7px; align-items: center; min-width: 178px; padding: 7px 11px; border: 1px solid rgba(183,211,233,.3); border-radius: 7px; color: #d4e3ef; background: rgba(3,18,34,.26); font: inherit; text-align: left; cursor: pointer; transition: border-color .18s ease, color .18s ease, background .18s ease; }.agent-command-trigger b { grid-row: 1 / 3; color: #e6bb77; font-size: 15px; }.agent-command-trigger span { font-size: 12px; font-weight: 800; white-space: nowrap; }.agent-command-trigger small { color: #9db7cc; font-size: 9px; letter-spacing: .04em; white-space: nowrap; }.agent-command-trigger:hover { border-color: rgba(224,184,115,.74); color: #fff; background: rgba(255,255,255,.1); }
+.global-agent-status { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid rgba(194, 216, 234, .2); border-radius: 999px; color: #c9d9e7; background: rgba(2, 17, 32, .16); font-size: 11px; letter-spacing: .18px; }
+.global-agent-status b { display: block; width: 6px; height: 6px; border-radius: 50%; background: #68d4a0; box-shadow: 0 0 0 4px rgba(104, 212, 160, .13); animation: agent-status-pulse 2.6s ease-in-out infinite; }
+
+/* --------------------------------------------------------------------------
+ * 外部预警设置
+ * 负责：企业微信、邮件的脱敏配置弹窗；不影响各业务页面的数据展示。
+ * Modified by DingJiaye: 2026-08-27.
+ * -------------------------------------------------------------------------- */
+.agent-settings-trigger { margin-right: 10px; padding: 7px 11px; border: 1px solid rgba(205,224,239,.35); border-radius: 9px; color: #dcecf8; background: rgba(255,255,255,.06); font: inherit; font-size: 12px; cursor: pointer; transition: background .2s ease, transform .2s ease, border-color .2s ease; }
+.agent-settings-trigger:hover { border-color: rgba(231,193,132,.72); color: #fff; background: rgba(255,255,255,.13); transform: translateY(-1px); }
+.alert-settings-dialog { width: min(760px, calc(100vw - 28px)); max-height: calc(100vh - 28px); margin: auto; padding: 0; overflow: auto; border: 0; border-radius: 18px; color: var(--ui-ink); background: transparent; box-shadow: 0 30px 90px rgba(7,23,42,.36); }
+/* Command Center 与主动发现：作为情报控制面层，不采用客服气泡视觉。Modified by DingJiaye: 2026-08-28. */
+.agent-command-dialog { width: min(720px, calc(100vw - 28px)); margin: 12vh auto 0; padding: 0; border: 0; border-radius: 12px; color: #dce8f3; background: transparent; box-shadow: 0 28px 90px rgba(2,13,25,.48); }.agent-command-dialog::backdrop { background: rgba(4,17,30,.52); backdrop-filter: blur(5px); }.agent-command-surface { display: grid; gap: 16px; padding: 22px; border: 1px solid rgba(125,162,193,.56); border-radius: 12px; background: linear-gradient(145deg,#14314a,#0c2237); }.agent-command-surface header { display: flex; justify-content: space-between; gap: 16px; }.agent-command-surface header span { color: #8babc6; font-size: 10px; font-weight: 800; letter-spacing: .16em; }.agent-command-surface header h2 { margin: 5px 0 0; color: #f1f7fc; font-size: 20px; letter-spacing: -.02em; }.agent-command-surface header button { width: 28px; height: 28px; border: 0; border-radius: 5px; color: #bcd1e3; background: transparent; font-size: 22px; cursor: pointer; }.agent-command-surface label input { width: 100%; box-sizing: border-box; padding: 14px 15px; border: 1px solid #477496; border-radius: 7px; outline: 0; color: #eef7ff; background: rgba(3,16,30,.64); font: inherit; font-size: 15px; }.agent-command-surface label input:focus { border-color: #8eb8dc; box-shadow: 0 0 0 3px rgba(102,163,211,.15); }.agent-command-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }.agent-command-suggestions button { padding: 7px 9px; border: 1px solid rgba(132,167,195,.36); border-radius: 5px; color: #b7cde0; background: rgba(255,255,255,.04); font: inherit; font-size: 11px; cursor: pointer; }.agent-command-suggestions button:hover { color: #fff; border-color: #83afd0; background: rgba(103,163,209,.14); }.agent-command-surface p { min-height: 18px; margin: 0; color: #a8c3d8; font-size: 12px; }.agent-command-surface p.has-answer { max-height: 300px; overflow: auto; padding: 12px; border: 1px solid rgba(128,166,195,.28); border-radius: 7px; color: #d9e9f6; background: rgba(2,15,29,.36); white-space: pre-wrap; line-height: 1.7; }.agent-command-surface footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(151,184,211,.18); color: #7fa0ba; font-size: 11px; }.agent-command-surface footer button { padding: 8px 13px; border: 1px solid #75a8d1; border-radius: 6px; color: #fff; background: #356c99; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.agent-proactive-panel { position: fixed; z-index: 80; right: 22px; bottom: 22px; width: min(320px, calc(100vw - 44px)); padding: 15px 16px; border: 1px solid #c7dae7; border-left: 3px solid #d1685d; border-radius: 9px; color: #405a70; background: rgba(251,253,255,.97); box-shadow: 0 16px 42px rgba(21,48,73,.18); opacity: 0; transform: translateY(10px); transition: opacity .18s ease, transform .18s ease; }.agent-proactive-panel.is-visible { opacity: 1; transform: translateY(0); }.agent-proactive-panel header { display: flex; align-items: center; justify-content: space-between; color: #2e5475; font-size: 12px; font-weight: 800; }.agent-proactive-panel header span { display: inline-flex; align-items: center; gap: 7px; }.agent-proactive-panel header b { width: 7px; height: 7px; border-radius: 50%; background: #d1685d; }.agent-proactive-panel header button { border: 0; color: #8799a9; background: transparent; font-size: 19px; line-height: 1; cursor: pointer; }.agent-proactive-panel > strong { display: block; margin: 11px 0 8px; color: #29455e; font-size: 14px; }.agent-proactive-panel ul { display: grid; gap: 6px; margin: 0 0 11px; padding: 0; list-style: none; color: #61778b; font-size: 12px; line-height: 1.45; }.agent-proactive-panel li::before { content: "⚠"; margin-right: 7px; color: #c57a31; }.agent-proactive-panel a { color: #32648b; font-size: 12px; font-weight: 750; text-decoration: none; }.agent-proactive-panel a:hover { text-decoration: underline; }
+.alert-settings-dialog::backdrop { background: rgba(9,23,39,.53); backdrop-filter: blur(5px); }
+.alert-settings-dialog.is-open { display: block; position: fixed; z-index: 2000; inset: 14px; }
+.alert-settings-surface { padding: 26px; border: 1px solid rgba(178,203,224,.8); border-radius: 18px; background: linear-gradient(145deg, #fcfeff, #f1f7fb); }
+.alert-settings-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid #dce7f0; }
+.alert-settings-eyebrow { display: block; margin-bottom: 4px; color: #6385a4; font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+.alert-settings-header h2 { margin: 0; color: #173a5c; font-size: 23px; letter-spacing: -.02em; }
+.alert-settings-close { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #cddcea; border-radius: 50%; color: #506c86; background: #fff; font-size: 25px; line-height: 1; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+.alert-settings-close:hover { background: #ecf4fa; transform: rotate(90deg); }
+.alert-settings-feedback { min-height: 20px; margin: 14px 0 0; color: #63809a; font-size: 13px; }.alert-settings-feedback.error { color: #a13d39; }.alert-settings-feedback.success { color: #227552; }
+.alert-policy-card { display: grid; grid-template-columns: 1fr auto; gap: 14px 20px; margin-top: 16px; padding: 16px; border: 1px solid #cfdfea; border-radius: 13px; background: rgba(233,244,252,.7); }
+.alert-daily-brief-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 12px; padding: 14px 16px; border: 1px solid #d5e2ec; border-radius: 12px; background: #fff; }.alert-daily-brief-card > div { display: grid; gap: 4px; }.alert-daily-brief-card strong { color: #305476; font-size: 14px; }.alert-daily-brief-card span { color: #7a8fa2; font-size: 12px; }
+.alert-policy-copy { display: grid; gap: 3px; }.alert-policy-copy strong { color: #254d72; font-size: 15px; }.alert-policy-copy span { color: #72869b; font-size: 12px; }
+.alert-switch { display: inline-flex; align-items: center; gap: 7px; color: #43607b; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; }.alert-switch input { position: absolute; opacity: 0; pointer-events: none; }.alert-switch span { position: relative; width: 32px; height: 18px; border-radius: 999px; background: #b5c3d0; transition: background .2s ease; }.alert-switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.18); transition: transform .2s ease; }.alert-switch input:checked + span { background: #467da9; }.alert-switch input:checked + span::after { transform: translateX(14px); }
+.alert-rule-options { display: grid; grid-template-columns: 170px minmax(0, 1fr); grid-column: 1 / -1; gap: 12px 16px; align-items: start; }.alert-rule-options label, .alert-check { display: inline-flex; align-items: center; gap: 6px; color: #58718a; font-size: 12px; cursor: pointer; }.alert-rule-options input, .alert-check input { accent-color: #477eaa; }.alert-choice { min-height: 36px; padding: 0 11px; border: 1px solid #ccddea; border-radius: 9px; background: #fff; font-weight: 700; }.alert-entity-field { display: grid !important; gap: 7px; cursor: default !important; }.alert-entity-field > span { color: #58718a; font-size: 12px; font-weight: 700; }.alert-entity-checklist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 160px; overflow: auto; border: 1px solid #cdddea; border-radius: 9px; background: #fff; }.alert-entity-choice { min-height: 36px; padding: 8px 10px; border-bottom: 1px solid #edf2f6; color: #355877 !important; font-weight: 600; }.alert-entity-choice:nth-child(odd) { border-right: 1px solid #edf2f6; }.alert-entity-choice:hover { background: #f1f7fc; }.alert-entity-choice input { flex: 0 0 auto; }
+.alert-save-btn { justify-self: end; padding: 9px 14px; border: 1px solid #315d8b; border-radius: 9px; color: #fff; background: linear-gradient(135deg, #3d709d, #274f76); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 11px rgba(39,79,118,.14); transition: transform .18s ease, filter .18s ease; }.alert-save-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }.alert-save-btn:disabled { cursor: wait; opacity: .65; }.alert-policy-card .alert-save-btn { grid-column: 2; }.alert-save-btn.subtle { color: #315d8b; background: #fff; box-shadow: none; }
+.alert-channel-tabs { display: flex; gap: 7px; margin-top: 22px; padding-bottom: 10px; border-bottom: 1px solid #d9e5ee; }.alert-channel-tabs button { padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; color: #70869a; background: transparent; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }.alert-channel-tabs button.active { border-color: #c4d8e9; color: #285274; background: #eaf3fa; }
+.alert-channel-panel { padding: 18px 0 6px; }.alert-channel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 15px; }.alert-channel-heading h3 { margin: 0 0 4px; color: #274b6d; font-size: 16px; }.alert-channel-heading p { margin: 0; color: #7b8fa2; font-size: 12px; }
+.alert-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }.alert-field { display: grid; gap: 6px; color: #5d748b; font-size: 12px; font-weight: 700; }.alert-field.wide { grid-column: 1 / -1; }.alert-field input { width: 100%; box-sizing: border-box; padding: 10px 11px; font-size: 13px; }.alert-check { margin: 14px 0; }
+.alert-channel-panel .alert-save-btn { margin-top: 16px; }.alert-settings-note { margin: 18px 0 0; padding-top: 13px; border-top: 1px solid #dce7f0; color: #8092a3; font-size: 11px; }
+
+/* 手工补录与发送：服务于日报、主体评估同一套可追溯新闻流程。Modified by DingJiaye: 2026-08-28. */
+.manual-news-dialog { width: min(660px, calc(100vw - 28px)); max-height: calc(100vh - 28px); padding: 0; overflow: auto; border: 0; border-radius: 16px; background: transparent; box-shadow: 0 30px 90px rgba(7,23,42,.36); }.manual-news-dialog::backdrop { background: rgba(9,23,39,.53); backdrop-filter: blur(5px); }.manual-news-dialog.is-open { display: block; position: fixed; z-index: 2000; inset: 14px; }.manual-news-surface { display: grid; gap: 14px; padding: 24px; border: 1px solid #c8d9e7; border-radius: 16px; background: #f8fbfe; }.manual-news-surface textarea { resize: vertical; min-height: 100px; padding: 10px 11px; font: inherit; line-height: 1.55; }.manual-news-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+.entity-report-dialog .manual-news-surface { background: linear-gradient(145deg, #f8fbfe, #f0f6fb); }.entity-report-subject { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 12px; border-left: 3px solid #6f9fca; color: #6c8297; background: #edf5fb; font-size: 12px; }.entity-report-subject strong { color: #2c587d; font-size: 13px; }
+.news-selection-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 12px 0; padding: 9px 12px; border: 1px solid #c8d9e7; border-radius: 8px; color: #46627c; background: #eef6fc; font-size: 12px; }.news-selection-toolbar button, .ea-event-add { padding: 7px 11px; border: 1px solid #3b6f9b; border-radius: 7px; color: #fff; background: #3b6f9b; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }.news-selection-toolbar button:hover, .ea-event-add:hover { background: #275576; }.news-select { display: inline-flex; align-items: center; margin-right: 2px; cursor: pointer; }.news-select input { position: absolute; opacity: 0; }.news-select span { display: grid; width: 16px; height: 16px; place-items: center; border: 1px solid #98aec2; border-radius: 4px; background: #fff; }.news-select input:checked + span { border-color: #3d76a5; background: #3d76a5; }.news-select input:checked + span::after { content: "✓"; color: #fff; font-size: 11px; font-weight: 800; }
+.daily-agent-secondary { padding: 8px 11px; border: 1px solid #aac6dc; border-radius: 8px; color: #315e83; background: #f5faff; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }.daily-agent-secondary:hover { border-color: #6394bc; background: #e7f2fa; }
+/* Global Risk Overview：日报与主体页共用的 Agent 状态面板。Modified by DingJiaye: 2026-08-28. */
+.agent-overview-panel { margin: 16px 0 26px; padding: 20px 22px; border: 1px solid #ccdce9; border-radius: 12px; color: #29455f; background: linear-gradient(135deg, #f9fcfe, #f2f7fb); box-shadow: 0 8px 24px rgba(34,65,91,.045); }.agent-overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid #dbe7ef; }.agent-overview-head > div > span { color: #7d94a8; font-size: 11px; font-weight: 800; letter-spacing: .13em; }.agent-overview-head h2 { margin: 5px 0 0; color: #294965; font-size: 15px; letter-spacing: .055em; }.agent-live-dot { display: inline-flex; align-items: center; gap: 6px; color: #397a59; font-size: 12px; font-weight: 750; white-space: nowrap; }.agent-live-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4da774; box-shadow: 0 0 0 4px rgba(77,167,116,.12); animation: daily-agent-pulse 1.4s ease-in-out infinite; }.agent-overview-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 16px 0; overflow: hidden; border: 1px solid #dce7ef; background: #dce7ef; }.agent-overview-metrics > div { display: grid; gap: 3px; min-height: 62px; padding: 10px 15px; background: rgba(255,255,255,.78); }.agent-overview-metrics b { color: #285474; font-size: 25px; font-variant-numeric: tabular-nums; line-height: 1; }.agent-overview-metrics span { color: #8194a6; font-size: 10px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }.agent-overview-status { display: grid; grid-template-columns: minmax(220px, .9fr) minmax(260px, 1.4fr) auto; gap: 16px; align-items: center; color: #5c7287; font-size: 12px; }.agent-overview-status > div { display: flex; gap: 8px; align-items: center; }.agent-overview-status strong { color: #d1665b; font-size: 13px; }.agent-overview-status ul { display: flex; flex-wrap: wrap; gap: 5px 16px; margin: 0; padding: 0; list-style: none; }.agent-overview-status li::before { content: "●"; margin-right: 6px; color: #6f9bc0; font-size: 8px; }.agent-overview-status a { color: #315f86; font-weight: 750; text-decoration: none; white-space: nowrap; }.agent-overview-status a:hover { color: #173f63; text-decoration: underline; }.entity-agent-overview { margin-top: 0; }
+/* 日报内联风险总览：归入 Agent 主面板，避免与工作流形成两张重复卡片。Modified by DingJiaye: 2026-08-28. */
+.daily-agent-hero .agent-overview-inline { grid-column: 1 / -1; margin: 0 -1.35rem -1.2rem; padding: 16px 1.35rem 18px; border-top: 1px solid #dce8f1; background: rgba(246,250,253,.7); }.agent-overview-inline-head { display: flex; align-items: baseline; gap: 12px; }.agent-overview-inline-head > span { color: #7d94a8; font-size: 10px; font-weight: 800; letter-spacing: .13em; }.agent-overview-inline-head h2 { margin: 0; color: #294965; font-size: 14px; letter-spacing: .055em; }.daily-agent-hero .agent-overview-metrics { margin: 12px 0; }.daily-agent-hero .agent-overview-metrics > div { min-height: 53px; padding: 8px 13px; }.daily-agent-hero .agent-overview-metrics b { font-size: 21px; }
+.daily-agent-hero .agent-overview-inline-head { align-items: flex-end; justify-content: space-between; }.daily-agent-hero .agent-overview-inline-head > div { display: grid; gap: 5px; }.daily-agent-hero .agent-overview-inline-head h2 { font-size: 17px; letter-spacing: -.01em; }.daily-agent-hero .agent-overview-inline-head em { color: #8a9bab; font-size: 11px; font-style: normal; }.daily-monitor-metrics > div { position: relative; gap: 4px !important; padding: 12px 15px !important; }.daily-monitor-metrics > div::before { content: ""; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: #81a9ca; }.daily-monitor-metrics .metric-alerts::before { background: #d1a23a; }.daily-monitor-metrics .metric-escalated::before { background: #c8645c; }.daily-monitor-metrics b { font-size: 27px !important; }.daily-monitor-metrics span { color: #47637c !important; font-size: 11px !important; letter-spacing: .08em !important; }.daily-monitor-metrics small { color: #91a0ad; font-size: 10px; }.daily-monitor-status { display: flex; min-height: 25px; padding: 9px 11px; border-left: 3px solid #69a982; background: rgba(237,247,241,.72); }.daily-monitor-status strong { color: #4ba272; }.daily-monitor-status ul { color: #668278; }.daily-monitor-status li::before { color: #6bad8a; }
+.risk-level-tag { display: inline-flex !important; align-items: center; gap: 5px; }.risk-level-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 13%, transparent); }.risk-tag-低 { color: #687786 !important; background: #eef1f4 !important; border-color: #d4dce3 !important; }.risk-tag-中 { color: #946d12 !important; background: #fff3cd !important; border-color: #edcf7c !important; }.risk-tag-高, .risk-tag-极高 { color: #a13b3b !important; background: #fde8e7 !important; border-color: #e9aaa7 !important; }.risk-tag-中::before { animation: risk-signal-pulse 1.9s ease-in-out infinite; }.risk-tag-高::before, .risk-tag-极高::before { animation: risk-signal-pulse 1.25s ease-in-out infinite; }
+/* 新闻标题前方信号条：低=灰、关注=黄、风险=红。Modified by DingJiaye: 2026-08-28. */
+.entry-card.risk-event-card.level-border-低::before { background: #aeb9c4 !important; }.entry-card.risk-event-card.level-border-中::before { background: #d7a72c !important; }.entry-card.risk-event-card.level-border-高::before, .entry-card.risk-event-card.level-border-极高::before { background: #ca5754 !important; }
+.risk-event-card.level-border-中 { border-left-color: #d7a72c !important; }.risk-event-card.level-border-高, .risk-event-card.level-border-极高 { border-left-color: #ca5754 !important; }
+
+/* 日报总览精简为“新事件 / 需关注 / 风险”三项。
+   Modified by DingJiaye: 2026-08-28. */
+.daily-agent-hero .agent-overview-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.daily-monitor-metrics .metric-risk::before { background: #c8645c; }
+
+.app-agent-shell .app-shell { height: calc(100vh - 72px); background: transparent; }
+.app-agent-shell .app-main { scrollbar-color: #a4b6c8 transparent; scrollbar-width: thin; }
+.app-agent-shell .app-main::-webkit-scrollbar { width: 9px; }.app-agent-shell .app-main::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 10px; background: #9fb1c2; background-clip: padding-box; }
+.app-agent-shell .page-rail { position: relative; border-right: 1px solid rgba(188, 204, 218, .76) !important; background: linear-gradient(180deg, rgba(252,254,255,.96), rgba(244,248,252,.96)) !important; box-shadow: 10px 0 30px rgba(35, 62, 89, .035); }
+.app-agent-shell .page-rail::before { content: ""; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--ui-primary), #79aed5 58%, var(--ui-gold)); }
+.app-agent-shell .content-shell { padding: 26px 30px 56px; }
+.app-agent-shell .content { max-width: 1500px; margin: 0 auto; }
+
+.app-agent-shell .daily-search { border: 1px solid #dce6ef; border-radius: 12px; background: #f4f8fb; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+.app-agent-shell .daily-search:focus-within { border-color: #7ba8ce; background: #fff; box-shadow: 0 0 0 4px rgba(75, 132, 183, .11); }
+.app-agent-shell .daily-index-title { color: #45627f; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.app-agent-shell .mod-name, .app-agent-shell .entity-link { border-radius: 10px; transition: transform .18s ease, color .18s ease, background .18s ease, box-shadow .18s ease; }
+.app-agent-shell .mod-name:hover, .app-agent-shell .entity-link:hover { color: #244c73; background: #eaf2f9; transform: translateX(2px); }
+.app-agent-shell .mod-name.active, .app-agent-shell .entity-link.active { color: #173e67; background: linear-gradient(90deg, #e6f0f9, #f6f9fc); box-shadow: inset 3px 0 0 #5e94c4; }
+
+.app-agent-shell .daily-sidebar-footer { border-top: 1px solid #e0e8f0; background: linear-gradient(180deg, rgba(255,255,255,0), #f8fbfe 30%); }
+.app-agent-shell .sidebar-action-primary, .app-agent-shell .sidebar-action-secondary, .app-agent-shell .btn.primary, .app-agent-shell button[type="submit"] { border: 1px solid transparent; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #315d8b, #254b72); box-shadow: 0 7px 16px rgba(39, 78, 116, .16); }
+.app-agent-shell .sidebar-action-secondary { color: #345a7e; border-color: #bcd0e2; background: #fff; box-shadow: none; }
+.app-agent-shell .sidebar-action-primary:hover, .app-agent-shell .btn.primary:hover, .app-agent-shell button[type="submit"]:hover { background: linear-gradient(135deg, #264d75, #193d64); box-shadow: 0 11px 21px rgba(39, 78, 116, .22); }
+.app-agent-shell .sidebar-action-secondary:hover { color: #244c73; border-color: #7ea7ca; background: #f2f8fd; }
+
+.app-agent-shell .entry-card, .app-agent-shell .entity-risk-card, .app-agent-shell .entity-financial-card, .app-agent-shell .ir-overview, .app-agent-shell .ir-table-wrap, .app-agent-shell .report-preview, .app-agent-shell .industry-document-workspace { border-color: #d9e5ee; box-shadow: var(--ui-shadow-card); }
+.app-agent-shell .entry-card, .app-agent-shell .entity-risk-card { background: linear-gradient(142deg, rgba(255,255,255,.98), rgba(247,251,254,.98)); }
+.app-agent-shell .entry-card:hover, .app-agent-shell .entity-risk-card:hover { border-color: #b8d0e4; box-shadow: 0 18px 34px rgba(27, 61, 93, .12); }
+.app-agent-shell input, .app-agent-shell select, .app-agent-shell textarea { border-color: #d2deea; border-radius: 10px; background: rgba(255,255,255,.92); color: var(--ui-ink); transition: border-color .18s ease, box-shadow .18s ease; }
+.app-agent-shell input:focus, .app-agent-shell select:focus, .app-agent-shell textarea:focus { outline: 0; border-color: #77a8d0; box-shadow: 0 0 0 4px rgba(74, 132, 184, .11); }
+
+@keyframes agent-status-pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(104,212,160,.1); } 50% { box-shadow: 0 0 0 7px rgba(104,212,160,0); } }
+@keyframes risk-signal-pulse { 0%,100% { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 13%, transparent); } 50% { opacity: .72; box-shadow: 0 0 0 6px transparent; } }
+
+@media (max-width: 900px) {
+  .app-agent-shell .top-bar { height: 64px; min-height: 64px; padding: 0 16px; }
+  .app-agent-shell::before { inset: 64px 0 0; }
+  .app-agent-shell .app-shell { height: calc(100vh - 64px); }
+  .app-agent-shell .brand { min-width: auto; }.app-agent-shell .header-tools { min-width: auto; }.global-agent-status { display: none; }
+  .agent-settings-trigger { margin-right: 0; }
+  .app-agent-shell .content-shell { padding: 18px 16px 40px; }
+  .alert-settings-surface { padding: 19px; }.alert-policy-card { grid-template-columns: 1fr; }.alert-policy-card .alert-save-btn { grid-column: 1; justify-self: start; }.alert-daily-brief-card { align-items: flex-start; flex-direction: column; }.alert-rule-options { grid-template-columns: 1fr; }.alert-entity-checklist { grid-template-columns: 1fr; }.alert-entity-choice:nth-child(odd) { border-right: 0; }.alert-field-grid { grid-template-columns: 1fr; }.alert-field.wide { grid-column: auto; }
+  .manual-news-surface { padding: 19px; }.manual-news-footer { justify-content: stretch; }.manual-news-footer .alert-save-btn { flex: 1; }.daily-agent-telemetry { gap: 10px 15px; }.news-selection-toolbar { align-items: flex-start; flex-direction: column; }.agent-overview-panel { padding: 16px; }.agent-overview-head, .agent-overview-status { align-items: flex-start; flex-direction: column; }.agent-overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }.agent-overview-status { display: flex; }.agent-overview-status ul { display: grid; gap: 6px; }.daily-agent-hero .agent-overview-inline { margin-right: -1rem; margin-bottom: -1rem; margin-left: -1rem; padding: 14px 1rem 16px; }
+}

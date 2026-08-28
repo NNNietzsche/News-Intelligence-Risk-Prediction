@@ -1,0 +1,46 @@
+# 中文电脑和日文电脑使用同一份依赖，不要拆成两份。
+# 每台电脑各自建立 .venv 后执行: .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# 不要把某一台的 .venv 拷到另一台。
+# Render / Docker 也按本文件安装，与两台开发电脑的虚拟环境无关。
+#
+# 中文电脑：系统 Python 3.12，终端一般是 GBK/CP936，Activate.ps1 通常可直接用。
+# 日文电脑：系统 Python 3.12，终端默认 CP932。不要直接打 uvicorn；用 .\dev.ps1 启动。
+# 若 pip 报编码错误，用: .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+httpx==0.28.1
+python-docx==1.1.2
+python-pptx==1.0.2
+jinja2==3.1.4
+python-multipart==0.0.19
+apscheduler==3.10.4
+openpyxl==3.1.5
+pypdf[crypto]==5.1.0
+cryptography>=42.0.0
+PyMuPDF==1.28.0
+rapidocr==3.9.2
+onnxruntime==1.28.0
+matplotlib==3.9.3
+feedparser==6.0.11
+trafilatura==2.0.0
+PyYAML==6.0.2
+beautifulsoup4==4.12.3
+pandas==2.2.3
+openai==1.58.1
+reportlab==4.2.5
+
+# 界面四：开源数据抓取库
+yfinance==0.2.51
+akshare>=1.16.72
+sec-edgar-downloader>=5.0.2
+# TradingView（需本机已安装 git）
+# 若 git 安装失败，可改为: pip install git+https://github.com/rongardF/tvdatafeed.git
+tvdatafeed @ git+https://github.com/rongardF/tvdatafeed.git
+playwright==1.49.1
+ddgs==9.14.4

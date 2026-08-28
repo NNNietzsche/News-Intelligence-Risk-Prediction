@@ -1,0 +1,263 @@
+# RSS / Google News 数据源配置（外置，改完重启或热加载即可）
+# type: google = Google News 搜索 RSS；direct = 直连 feed URL
+# modules: 适用模块代码 B/C/D/A
+# priority: 越大越优先；enabled: false 可临时关闭故障源
+#
+# module_defaults: 可按模块覆盖 Google News 地区/语言（模块 C 用日本版）
+
+defaults:
+  # 扩大每个可信检索源的候选覆盖，后续仍按时效、财经相关性和板块规则过滤。
+  max_items_per_feed: 30
+  google_hl: zh-CN
+  google_gl: CN
+  google_ceid: "CN:zh-Hans"
+
+module_defaults:
+  C:
+    google_hl: ja
+    google_gl: JP
+    google_ceid: "JP:ja"
+
+queries:
+  # A 的主体专属查询集中维护在 config/entity_targets.yaml，避免全量查询跨主体混入。
+  A: []
+  B:
+    # 官方/准官方来源优先；跨媒体只作为覆盖补充。
+    - label: 沙特通讯社 SPA
+      query: "site:spa.gov.sa (economy OR energy OR finance OR Iran OR Gaza OR Israel)"
+      priority: 32
+    - label: 阿联酋通讯社 WAM
+      query: "site:wam.ae (economy OR energy OR finance OR Middle East)"
+      priority: 31
+    - label: 沙特外交部
+      query: "site:mofa.gov.sa (statement OR sanctions OR Iran OR Gaza OR Israel)"
+      priority: 30
+    - label: 卡塔尔通讯社 QNA
+      query: "site:qna.org.qa (economy OR energy OR finance OR Iran OR Gaza OR Israel)"
+      priority: 29
+    - label: 科威特通讯社 KUNA
+      query: "site:kuna.net.kw (economy OR oil OR energy OR finance OR Middle East)"
+      priority: 29
+    - label: 阿曼通讯社 ONA
+      query: "site:omannews.gov.om (economy OR energy OR investment OR Middle East)"
+      priority: 28
+    - label: 中东能源与航运
+      query: "(Middle East OR Gulf OR Red Sea) (oil OR LNG OR shipping OR ports OR trade OR sanctions)"
+      priority: 24
+    - label: 中东区域金融市场
+      query: "(Saudi Arabia OR UAE OR Qatar OR Israel OR Iran) (market OR bonds OR investment OR currency OR central bank)"
+      priority: 24
+    - label: 中东地缘
+      query: "Middle East news OR geopolitics OR Gaza OR Iran OR Israel"
+      priority: 20
+    - label: 中东政策中文
+      query: "中东 新闻 OR 地缘政治 OR 官方声明 OR 制裁"
+      priority: 20
+  C:
+    # 日本官方/准官方优先：適時開示・IR・ニュースリリース（Google 日本版）
+    - label: 五大商社 適時開示
+      query: "(三菱商事 OR 三井物産 OR 伊藤忠商事 OR 住友商事 OR 丸紅) (適時開示 OR IR OR ニュースリリース OR 決算)"
+      priority: 30
+    - label: 电装 邮船 大和
+      query: "(デンソー OR 日本郵船 OR 大和証券) (適時開示 OR ニュースリリース OR IR OR 決算)"
+      priority: 28
+    - label: 三大银行官方披露
+      query: "(三菱UFJ OR 三井住友FG OR みずほ) (ニュースリリース OR IR OR 決算 OR 適時開示)"
+      priority: 29
+    - label: 三大券商官方披露
+      query: "(野村ホールディングス OR 大和証券 OR SMBC日興) (ニュースリリース OR IR OR 決算 OR 適時開示)"
+      priority: 29
+    - label: 三菱商事官网
+      query: "site:www.mitsubishicorp.com (ニュースリリース OR 適時開示 OR IR)"
+      priority: 26
+    - label: 三井物产官网
+      query: "site:www.mitsui.com (ニュースリリース OR 適時開示 OR IR)"
+      priority: 26
+    - label: 伊藤忠官网
+      query: "site:www.itochu.co.jp (ニュースリリース OR 適時開示 OR IR)"
+      priority: 26
+    - label: 住友商事官网
+      query: "site:www.sumitomocorp.com (ニュースリリース OR 適時開示 OR IR)"
+      priority: 24
+    - label: 丸红官网
+      query: "site:www.marubeni.com (ニュースリリース OR 適時開示 OR IR)"
+      priority: 24
+    - label: デンソー官网
+      query: "site:www.denso.com (ニュース OR プレスリリース OR IR)"
+      priority: 22
+    - label: 日本郵船官网
+      query: "site:www.nyk.com (ニュース OR プレスリリース OR IR)"
+      priority: 22
+    - label: 大和証券官网
+      query: "site:www.daiwa.jp OR site:www.daiwa-grp.jp (ニュース OR IR OR 適時開示)"
+      priority: 22
+    - label: 三菱UFJ官网
+      query: "site:mufg.jp (ニュースリリース OR IR OR 決算)"
+      priority: 23
+    - label: 三井住友FG官网
+      query: "site:smfg.co.jp (ニュースリリース OR IR OR 決算)"
+      priority: 23
+    - label: みずほ官网
+      query: "site:mizuho-fg.co.jp (ニュースリリース OR IR OR 決算)"
+      priority: 23
+    - label: 野村官网
+      query: "site:nomuraholdings.com OR site:nomura.com (ニュースリリース OR IR OR 決算)"
+      priority: 22
+    - label: SMBC日興官网
+      query: "site:smbcnikko.co.jp (ニュースリリース OR IR OR 適時開示)"
+      priority: 22
+    - label: TDnet 披露相关
+      query: "(三菱商事 OR 三井物産 OR 伊藤忠 OR 住友商事 OR 丸紅 OR デンソー OR 日本郵船 OR 大和証券) (適時開示 OR TDnet OR 開示情報)"
+      priority: 20
+    - label: 日経 企业报道
+      query: "site:www.nikkei.com (三菱商事 OR 三井物産 OR 伊藤忠 OR 住友商事 OR 丸紅 OR デンソー OR 日本郵船 OR 大和証券)"
+      priority: 18
+    - label: PR TIMES 企业稿
+      query: "site:prtimes.jp (三菱商事 OR 三井物産 OR 伊藤忠 OR 住友商事 OR 丸紅 OR デンソー OR 日本郵船 OR 大和証券)"
+      priority: 14
+    - label: 英文 IR 补充
+      query: "(Mitsubishi Corp OR Mitsui & Co OR Itochu OR Sumitomo Corp OR Marubeni OR Denso OR NYK OR Daiwa Securities) (IR OR disclosure OR earnings)"
+      priority: 12
+    - label: 日本企业综合财经报道
+      query: "(三菱商事 OR 三井物産 OR 伊藤忠商事 OR 住友商事 OR 丸紅 OR デンソー OR 日本郵船 OR 三菱UFJ OR 三井住友FG OR みずほ OR 野村 OR 大和証券 OR SMBC日興) (決算 OR 投資 OR 融資 OR 株価 OR 事業 OR 規制 OR 訴訟)"
+      priority: 18
+    - label: 日本交易所与 EDINET 披露
+      query: "(site:jpx.co.jp OR site:tdnet.info OR site:disclosure.edinet-fsa.go.jp) (8058 OR 8031 OR 8001 OR 8053 OR 8002 OR 6902 OR 9101 OR 8306 OR 8316 OR 8411 OR 8604 OR 8601)"
+      priority: 27
+    - label: 路透社日本企业报道
+      query: "site:reuters.com (Mitsubishi Corp OR Mitsui OR Itochu OR Sumitomo OR Marubeni OR Denso OR NYK OR MUFG OR SMFG OR Mizuho OR Nomura) Japan"
+      priority: 17
+  D:
+    - label: 原油 LNG
+      query: "oil price OR crude OR LNG market news"
+      priority: 20
+    - label: 央行与宏观
+      query: "Federal Reserve OR Bank of Japan OR 美联储 OR 日本央行 新闻"
+      priority: 20
+    - label: 贵金属股市
+      query: "gold price OR stock market OR 贵金属 OR 股市"
+      priority: 18
+    - label: 美元兑日元与外汇
+      query: "USD JPY OR ドル円 OR 美元 日元 汇率 (Bank of Japan OR Federal Reserve OR FX market)"
+      priority: 20
+    - label: 美国能源署 EIA
+      query: "site:eia.gov (oil OR crude OR petroleum OR natural gas OR inventory OR outlook)"
+      priority: 30
+    - label: 欧佩克 OPEC
+      query: "site:opec.org (oil market OR crude OR production OR monthly report)"
+      priority: 30
+    - label: 国际能源署 IEA
+      query: "site:iea.org (oil market OR gas market OR energy outlook)"
+      priority: 29
+    - label: 美联储官方披露
+      query: "site:federalreserve.gov (FOMC OR monetary policy OR interest rates OR economic outlook)"
+      priority: 30
+    - label: 日本央行官方披露
+      query: "site:boj.or.jp (金融政策 OR 経済・物価情勢 OR 為替 OR monetary policy)"
+      priority: 30
+    - label: 贵金属与全球股市
+      query: "(gold OR silver OR precious metals OR Nikkei OR S&P 500 OR Nasdaq) (price OR market OR stocks OR yields)"
+      priority: 18
+
+# 模块 D 行情核对入口（Yahoo Finance 报价页，只作人工打开，不入库）
+# 铜与美元兑日元用户给了同一地址 JPY=X，铜暂未挂上。
+market_quotes:
+  - label: 纳斯达克
+    url: "https://finance.yahoo.com/quote/%5EIXIC/"
+    group: index
+  - label: S&P 500
+    url: "https://finance.yahoo.com/quote/%5EGSPC/"
+    group: index
+  - label: 道琼斯
+    url: "https://finance.yahoo.com/quote/%5EDJI/"
+    group: index
+  - label: 日经
+    url: "https://finance.yahoo.com/quote/%5EN225/"
+    group: index
+  - label: 恒生
+    url: "https://finance.yahoo.com/quote/%5EHSI/"
+    group: index
+  - label: 原油
+    url: "https://finance.yahoo.com/quote/CL%3DF/"
+    group: commodity
+  - label: 布伦特原油
+    url: "https://finance.yahoo.com/quote/BZ%3DF/"
+    group: commodity
+  - label: 黄金
+    url: "https://finance.yahoo.com/quote/GC%3DF/"
+    group: commodity
+  - label: 天然气
+    url: "https://finance.yahoo.com/quote/NG%3DF/"
+    group: commodity
+  - label: 美元兑日元
+    url: "https://finance.yahoo.com/quote/JPY%3DX/"
+    group: fx
+
+feeds:
+  - label: Reuters World
+    url: "https://feeds.reuters.com/Reuters/worldNews"
+    modules: [B, D]
+    type: direct
+    priority: 30
+    enabled: false
+  - label: Reuters Business
+    url: "https://feeds.reuters.com/reuters/businessNews"
+    modules: [C, D]
+    type: direct
+    priority: 30
+    # 本机常 DNS 失败（getaddrinfo 11001）；改由 Google News / 秘塔覆盖，避免空耗重试
+    enabled: false
+  # Godiva 供应链：ICI（含科特迪瓦 CCC 相关披露入口）
+  - label: ICI Cocoa Initiative
+    url: "https://www.cocoainitiative.org/rss.xml"
+    modules: [A]
+    type: direct
+    priority: 32
+    enabled: true
+    entity_key: Godiva
+    relation: contextual
+    source_type: industry
+  # 科特迪瓦可可产业新闻（官方 CCC 站点证书/鉴权异常时的可用替代 RSS）
+  - label: Cacao.ci
+    url: "https://cacao.ci/feed/"
+    modules: [A]
+    type: direct
+    priority: 28
+    enabled: true
+    entity_key: Godiva
+    relation: contextual
+    source_type: industry
+  - label: BBC Middle East
+    url: "http://feeds.bbci.co.uk/news/world/middle_east/rss.xml"
+    modules: [B, D]
+    type: direct
+    priority: 28
+    enabled: true
+  - label: BBC World
+    url: "http://feeds.bbci.co.uk/news/world/rss.xml"
+    modules: [D]
+    type: direct
+    priority: 25
+    enabled: true
+  # NHK 経済（cat5）；原 cat0 为综合头条，易混入无关内容
+  - label: NHK 経済
+    url: "https://www3.nhk.or.jp/rss/news/cat5.xml"
+    modules: [C, D]
+    type: direct
+    priority: 28
+    enabled: true
+  - label: NHK 国際
+    url: "https://www3.nhk.or.jp/rss/news/cat6.xml"
+    modules: [D]
+    type: direct
+    priority: 22
+    enabled: true
+  # PR TIMES 总线噪声大，改由 queries.C 的 site:prtimes.jp 查询接入
+  - label: PR TIMES
+    url: "https://prtimes.jp/index.rdf"
+    modules: [C]
+    type: direct
+    priority: 16
+    enabled: false
+  # 企业官网多数不公开稳定 RSS；通过 Google 日本版 + site: 查询接入（见 queries.C）
+  # TDnet / EDINET 无公开企业过滤 RSS，流水线保留门户人工核对链接；披露关键词见 queries.C

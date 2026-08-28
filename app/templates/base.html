@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet" />
+  {#
+    UI 样式加载顺序（请保持）：
+    1. dashboard.css：历史兼容基础层；不再新增页面功能样式。
+    2. ui/*.css：按功能页拆分的可维护样式层，新改动写入对应文件。
+    修改规范见 docs/UI_STYLE_GUIDE.md。
+  #}
+  <link rel="stylesheet" href="/static/css/dashboard.css?v=20260825-2" />
+  <link rel="stylesheet" href="/static/css/ui/tokens.css?v=20260827-1" />
+  <link rel="stylesheet" href="/static/css/ui/layout.css?v=20260828-4" />
+  <link rel="stylesheet" href="/static/css/ui/daily-news.css?v=20260828-6" />
+  <link rel="stylesheet" href="/static/css/ui/entity-assessment.css?v=20260828-5" />
+  {# Modified by DingJiaye: 2026-08-27 — 行业智能体样式仅由行业页按需加载，减少其它页面首屏 CSS。 #}
+  <link rel="stylesheet" href="/static/css/ui/intl-ratings.css?v=20260828-4" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="app-agent-shell page-{{ active_page }} {% if active_page in ('daily_news', 'news_7x24') %}daily-news-ui{% endif %}">
+  <header class="top-bar">
+    <div class="brand">
+      {# Header logo supplied by DingJiaye. Modified: 2026-08-28. #}
+      <img class="brand-bank-logo" src="/static/img/bank-of-communications-logo.webp" alt="交通银行 Bank of Communications" />
+    </div>
+    <nav class="main-nav" aria-label="主导航">
+      <a href="/daily-news" class="nav-link {% if active_page in ('daily_news', 'news_7x24') %}active{% endif %}">新闻汇总</a>
+      <a href="/entity-assessment" class="nav-link {% if active_page == 'entity_assessment' %}active{% endif %}">主体评估</a>
+      <a href="/deep-reports" class="nav-link {% if active_page == 'deep_reports' %}active{% endif %}">行业分析</a>
+      <a href="/intl-ratings" class="nav-link {% if active_page == 'intl_ratings' %}active{% endif %}">国际评级</a>
+    </nav>
+    <div class="header-tools">
+      {# Modified by DingJiaye: 2026-08-28 — 全局 Agent 命令入口，支持直接定位主体与工作台。 #}
+      <button class="agent-command-trigger" id="agent-command-open" type="button" aria-haspopup="dialog" aria-controls="agent-command-dialog"><b>⌘</b><span>InfoRisk Agent</span><small>搜索 · 询问 · 分析</small></button>
+      {# Modified by DingJiaye: 2026-08-27 — 全页面可访问的外部预警渠道设置入口。 #}
+      <button class="agent-settings-trigger" id="alert-settings-open" type="button" aria-haspopup="dialog" aria-controls="alert-settings-dialog">预警设置</button>
+      {% block header_extra %}{% endblock %}
+    </div>
+  </header>
+
+  {# 页面默认两栏；来源工作台可将来源面板置于主内容前。 #}
+  <div class="app-shell" id="app-shell">
+    {% block page_sidebar %}{% endblock %}
+    {% block source_panel_before_main %}{% endblock %}
+    <div class="app-main">
+      {% block content %}{% endblock %}
+    </div>
+    {% block source_panel %}{% endblock %}
+  </div>
+
+  {# Modified by DingJiaye: 2026-08-28 — 命令中心不模拟客服对话，仅用于风险对象与任务跳转。 #}
+  <dialog class="agent-command-dialog" id="agent-command-dialog" aria-labelledby="agent-command-title">
+    <form class="agent-command-surface" id="agent-command-form">
+      <header><div><span>INFO RISK COMMAND</span><h2 id="agent-command-title">我可以带你找到风险答案</h2></div><button type="button" data-agent-command-close aria-label="关闭">×</button></header>
+      <label><span class="sr-only">输入指令</span><input id="agent-command-input" autocomplete="off" placeholder="例如：分析 Godiva 最近 30 天的风险变化" /></label>
+      <div class="agent-command-suggestions"><button type="button" data-agent-command="哪些重点企业本周风险显著上升？">重点企业风险变化</button><button type="button" data-agent-command="打开新闻汇总">查看今日情报</button><button type="button" data-agent-command="打开国际评级">查看国际评级</button></div>
+      <p id="agent-command-result" role="status" aria-live="polite"></p>
+      <footer><span>按 Enter 执行</span><button type="submit">执行 →</button></footer>
+    </form>
+  </dialog>
+
+  {# Modified by DingJiaye: 2026-08-28 — 主动发现面板：仅有关注或风险事件时由页面数据驱动展示。 #}
+  <aside class="agent-proactive-panel" id="agent-proactive-panel" hidden aria-live="polite">
+    <header><span><b></b> InfoRisk Agent</span><button type="button" id="agent-proactive-close" aria-label="关闭提示">×</button></header>
+    <strong>我发现了值得关注的变化</strong>
+    <ul id="agent-proactive-list"></ul>
+    <a id="agent-proactive-link" href="/daily-news">查看风险变化 →</a>
+  </aside>
+
+  {# Modified by DingJiaye: 2026-08-27 — 密钥只提交至后端加密保存，重新打开时不会回显。 #}
+  <dialog class="alert-settings-dialog" id="alert-settings-dialog" aria-labelledby="alert-settings-title">
+    <div class="alert-settings-surface">
+      <header class="alert-settings-header">
+        <div>
+          <span class="alert-settings-eyebrow">ALERT DELIVERY</span>
+          <h2 id="alert-settings-title">外部预警通知</h2>
+        </div>
+        <button class="alert-settings-close" id="alert-settings-close" type="button" aria-label="关闭预警设置">×</button>
+      </header>
+
+      <p class="alert-settings-feedback" id="alert-settings-feedback" role="status" aria-live="polite"></p>
+
+      <section class="alert-policy-card" aria-label="预警规则">
+        <div class="alert-policy-copy"><strong>通知范围</strong><span>选择要推送到外部渠道的新闻类型</span></div>
+        <div class="alert-rule-options">
+          <label class="alert-choice"><input id="alert-high-risk-news" type="checkbox" checked /> 高风险新闻</label>
+          {# Modified by DingJiaye: 2026-08-28 — 关联企业改用勾选列表，便于一次选择多个主体。 #}
+          <div class="alert-entity-field"><span>关联企业新闻</span><div class="alert-entity-checklist" id="alert-entity-select" aria-label="选择主题评估关联企业"></div></div>
+        </div>
+        <button class="alert-save-btn subtle" id="alert-policy-save" type="button">保存规则</button>
+      </section>
+      <section class="alert-daily-brief-card" aria-label="今日风险情报概览">
+        <div><strong>今日风险情报概览</strong><span>将已入库新闻按中东、企业与宏观板块汇总为简报。</span></div>
+        <button class="alert-save-btn" id="alert-daily-brief-send" type="button">发布简报</button>
+      </section>
+
+      <div class="alert-channel-tabs" role="tablist" aria-label="通知渠道">
+        <button type="button" class="active" role="tab" aria-selected="true" data-alert-tab="wecom">企业微信</button>
+        <button type="button" role="tab" aria-selected="false" data-alert-tab="email">邮件</button>
+      </div>
+
+      <section class="alert-channel-panel active" data-alert-panel="wecom">
+        <div class="alert-channel-heading"><div><h3>企业微信机器人</h3><p>向指定企业微信群推送风险事件。</p></div><label class="alert-switch"><input id="wecom-enabled" type="checkbox" /><span></span>启用</label></div>
+        <label class="alert-field"><span>机器人 Webhook</span><input id="wecom-webhook" type="url" autocomplete="off" placeholder="粘贴 Webhook 地址" /></label>
+        <button class="alert-save-btn" type="button" data-alert-save="wecom">保存企业微信配置</button>
+      </section>
+
+      <section class="alert-channel-panel" data-alert-panel="email" hidden>
+        <div class="alert-channel-heading"><div><h3>邮件通知</h3><p>支持 SMTP 邮件网关与多个收件人。</p></div><label class="alert-switch"><input id="email-enabled" type="checkbox" /><span></span>启用</label></div>
+        <div class="alert-field-grid">
+          <label class="alert-field wide"><span>收件人</span><input id="email-to" type="text" placeholder="risk@example.com, team@example.com" /></label>
+          <label class="alert-field"><span>SMTP 主机</span><input id="smtp-host" type="text" placeholder="smtp.example.com" /></label>
+          <label class="alert-field"><span>端口</span><input id="smtp-port" type="number" min="1" max="65535" placeholder="587" /></label>
+          <label class="alert-field"><span>用户名</span><input id="smtp-username" type="text" autocomplete="username" /></label>
+          <label class="alert-field"><span>发件人</span><input id="smtp-from" type="email" placeholder="risk@example.com" /></label>
+          <label class="alert-field wide"><span>SMTP 密码</span><input id="smtp-password" type="password" autocomplete="new-password" placeholder="留空则保留已保存密码" /></label>
+        </div>
+        <label class="alert-check"><input id="smtp-tls" type="checkbox" checked /> 使用 STARTTLS</label>
+        <button class="alert-save-btn" type="button" data-alert-save="email">保存邮件配置</button>
+      </section>
+
+      <p class="alert-settings-note">密钥加密保存，页面不会再次显示机器人地址或 SMTP 密码。</p>
+    </div>
+  </dialog>
+
+  {# Modified by DingJiaye: 2026-08-28 — 日报新闻录入：按情报板块归档。 #}
+  <dialog class="manual-news-dialog" id="daily-news-dialog" aria-labelledby="daily-news-dialog-title">
+    <form class="manual-news-surface" id="daily-news-form">
+      <header class="alert-settings-header">
+        <div><span class="alert-settings-eyebrow">MANUAL INTELLIGENCE</span><h2 id="daily-news-dialog-title">添加新闻</h2></div>
+        <button class="alert-settings-close" type="button" data-manual-close="daily" aria-label="关闭">×</button>
+      </header>
+      <p class="alert-settings-feedback" id="daily-news-feedback" role="status" aria-live="polite"></p>
+      <label class="alert-field"><span>新闻板块</span><select id="daily-news-module"><option value="B">中东日报</option><option value="C">大型企业</option><option value="D">宏观市场</option></select></label>
+      <label class="alert-field"><span>新闻标题</span><input id="daily-news-title" required maxlength="512" placeholder="输入新闻标题" /></label>
+      <label class="alert-field"><span>内容详情</span><textarea id="daily-news-summary" required rows="5" placeholder="粘贴或填写可核验的新闻内容"></textarea></label>
+      <div class="alert-field-grid">
+        <label class="alert-field"><span>信源名称</span><input id="daily-news-source-name" placeholder="例如：日本时报 / 公司公告" /></label>
+        <label class="alert-field"><span>信源 URL</span><input id="daily-news-source-url" type="url" placeholder="https://…" /></label>
+        <label class="alert-field"><span>发布时间</span><input id="daily-news-published-at" type="datetime-local" /></label>
+        <label class="alert-field"><span>风险灯号</span><select id="daily-news-signal"><option value="低">低</option><option value="关注" selected>关注</option><option value="风险">风险</option></select></label>
+      </div>
+      <label class="alert-field"><span>事件类别</span><select id="daily-news-category"><option>公开舆情</option><option>金融与经营数据</option><option>司法/行政监管</option><option>供应链/关联方监控</option></select></label>
+      <footer class="manual-news-footer"><button class="alert-save-btn subtle" type="button" data-manual-close="daily">取消</button><button class="alert-save-btn" id="daily-news-submit" type="submit">保存新闻</button></footer>
+    </form>
+  </dialog>
+
+  {# Modified by DingJiaye: 2026-08-28 — 主体报道录入：绑定当前监测企业，不展示日报板块选择。 #}
+  <dialog class="manual-news-dialog entity-report-dialog" id="entity-report-dialog" aria-labelledby="entity-report-dialog-title">
+    <form class="manual-news-surface" id="entity-report-form">
+      <header class="alert-settings-header"><div><span class="alert-settings-eyebrow">ENTITY RISK INTELLIGENCE</span><h2 id="entity-report-dialog-title">添加主体报道</h2></div><button class="alert-settings-close" type="button" data-manual-close="entity" aria-label="关闭">×</button></header>
+      <p class="alert-settings-feedback" id="entity-report-feedback" role="status" aria-live="polite"></p>
+      <div class="entity-report-subject"><span>关联主体</span><strong id="entity-report-subject">当前监测主体</strong></div>
+      <label class="alert-field"><span>报道标题</span><input id="entity-report-title" required maxlength="512" placeholder="输入与该主体直接相关的报道标题" /></label>
+      <label class="alert-field"><span>报道详情</span><textarea id="entity-report-summary" required rows="6" placeholder="粘贴可核验的正文、公告要点或媒体报道内容"></textarea></label>
+      <div class="alert-field-grid">
+        <label class="alert-field"><span>信源名称</span><input id="entity-report-source-name" placeholder="例如：日本时报 / 公司公告" /></label>
+        <label class="alert-field"><span>信源 URL</span><input id="entity-report-source-url" type="url" placeholder="https://…" /></label>
+        <label class="alert-field"><span>源发布时间</span><input id="entity-report-published-at" type="datetime-local" /></label>
+        <label class="alert-field"><span>风险灯号</span><select id="entity-report-signal"><option value="低">低</option><option value="关注" selected>关注</option><option value="风险">风险</option></select></label>
+      </div>
+      <label class="alert-field"><span>风险分类</span><select id="entity-report-category"><option>公开舆情</option><option>金融与经营数据</option><option>司法/行政监管</option><option>供应链/关联方监控</option></select></label>
+      <footer class="manual-news-footer"><button class="alert-save-btn subtle" type="button" data-manual-close="entity">取消</button><button class="alert-save-btn" id="entity-report-submit" type="submit">保存主体报道</button></footer>
+    </form>
+  </dialog>
+
+  <script src="/static/js/ui_motion.js?v=20260827-1"></script>
+  <script src="/static/js/alert_settings.js?v=20260827-1"></script>
+  <script src="/static/js/manual_news.js?v=20260828-1"></script>
+  <script src="/static/js/agent_command.js?v=20260828-2"></script>
+  <script src="/static/js/dashboard.js?v=20260827-1"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

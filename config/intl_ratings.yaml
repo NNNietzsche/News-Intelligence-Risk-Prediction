@@ -1,0 +1,59 @@
+# 国际评级（界面四）流水线配置
+
+paths:
+  input_dir: data/intl_ratings/input
+  output_dir: data/intl_ratings/output
+  raw_response_dir: logs/raw_responses
+  error_log: logs/error.log
+  entity_cache: data/intl_ratings/entity_map_cache.json
+  issuers_json: config/issuers.json
+  sec_edgar_dir: data/intl_ratings/sec_edgar
+
+input_files:
+  - issuer_list.csv
+  - issuer_list.docx
+
+placeholders:
+  need_review: "[需人工复核]"
+  no_public_trade: "无公开交易数据"
+  not_listed: "未上市"
+  nr: "NR"
+
+bond_price:
+  lookback_days: 30
+  drop_threshold_pct: 5.0
+
+rating_change:
+  lookback_days: 90
+
+entity_mapper:
+  use_llm: true
+  temperature: 0.1
+  static_map: {}
+
+sources:
+  moodys_api: false
+  sp_api: false
+  fitch_api: false
+  akshare: true
+  yfinance: true
+  openfigi: true
+  tvdatafeed: true
+  sec_edgar: true
+  playwright_ratings: true   # 未上市且 API 无评级时 Playwright 兜底
+  bond_price_public: true
+  rating_change_feed: false
+  # 可选搜索补缺：默认关闭，避免消耗检索额度；优先抓 config/issuers.json 中配置的发行人官网 IR 评级页。
+  official_public_ratings: false
+  official_public_rating_max_results: 8
+  official_public_rating_max_queries_per_run: 20
+
+playwright_ratings:
+  headless: true
+  timeout_ms: 45000
+  enable_agency_pages: true  # 同时尝试穆迪/标普/惠誉公开搜索页
+
+runtime:
+  request_timeout_seconds: 60
+  max_issuers: 0
+  sleep_between_issuers: 0.5

@@ -1,0 +1,58 @@
+<section class="ea-panel" id="ea-news-panel" aria-labelledby="news-panel-title">
+  <div class="ea-panel-head">
+    <h2 id="news-panel-title">最新消息</h2>
+    <span class="ea-panel-count">
+      {{ latest_news.lookback_start or news_lookback_start }} 至 {{ report_date }}
+      {% if latest_news.direct_pending %}
+      · 直连信源待接入 · 大模型检索补缺
+      {% elif latest_news.search_fallback_used %}
+      · 直连暂无结果 · 已用检索补缺分析
+      {% elif latest_news.db_fallback_used %}
+      · 外网暂无结果 · 已按库内近三个月事件分析
+      {% else %}
+      · 直连 {{ latest_news.direct_source_count }} 个 · 大模型检索补缺
+      {% endif %}
+    </span>
+  </div>
+  {% if latest_news.status == 'ready' %}
+  <article class="ea-news-digest">
+    {% if latest_news.highlights %}
+    <p class="ea-news-kicker">近三个月汇总报告</p>
+    {% else %}
+    <p class="ea-news-kicker">近三个月汇总报告</p>
+    {% endif %}
+    {% if latest_news.summary %}
+    <p class="ea-news-summary">{{ latest_news.summary }}</p>
+    {% endif %}
+    {% if latest_news.risk_reasoning and latest_news.risk_reasoning.show %}
+    <p class="risk-tip"><span>风险提示</span>{{ latest_news.risk_reasoning.transmission }}</p>
+    {% endif %}
+    {% if latest_news.highlights %}
+    <ul class="ea-news-highlights">
+      {% for item in latest_news.highlights %}
+      <li>
+        <span class="ea-news-kind ea-news-kind-risk">核心风险</span>
+        {{ item.title }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </article>
+  {% else %}
+  <div class="ea-news-digest ea-news-pending" role="status">
+    <p class="ea-news-empty-hint">近三个月暂无核心风险；当前未取得带可核验发布日期的公开资讯标题。这不表示未配置信息源。</p>
+    {% if latest_news.direct_sources %}
+    <ul class="ea-news-sources ea-news-pending-sources" aria-label="已配置的直连信息源">
+      {% for source in latest_news.direct_sources %}
+      <li>
+        <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.label }}</a>
+        <span class="ea-news-feed">{{ {'official':'官网', 'exchange':'交易所公告', 'regulatory':'监管', 'media':'跨媒体检索'}.get(source.source_type, source.source_type) }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="ea-news-footer">请点击来源核对近期披露；如来源已有新内容但页面仍为空，请检查网络连接及检索密钥后点击“采集近三个月资讯”。</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</section>

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+  {# Modified by DingJiaye: 2026-08-26 — 更新演示报告表格与固定模板样式缓存。 #}
+  <link rel="stylesheet" href="/static/css/ui/industry-analysis.css?v=20260827-3" />
+{% endblock %}
+
+{% block title %}行业分析 — {{ app_name }}{% endblock %}
+
+{% block page_sidebar %}
+<aside
+  class="sidebar page-rail industry-sidebar"
+  data-sector-key="{{ sector_key }}"
+  data-sector-selected="{{ '1' if sector_selected else '0' }}"
+  data-default-industry-name="{{ sector_default_industry_name }}"
+>
+  <label class="daily-search" aria-label="搜索行业或报告">
+    <input type="search" id="industry-sidebar-search" placeholder="搜索行业或报告" autocomplete="off" />
+    <span aria-hidden="true">⌕</span>
+  </label>
+  <div class="daily-index-header">
+    <div class="industry-confirm-heading">
+      {% if sector_selected %}
+      <a class="industry-breadcrumb-link" href="/deep-reports">行业列表</a>
+      <span class="industry-breadcrumb-separator">›</span>
+      <h2 class="daily-index-title">{{ sector_label }}</h2>
+      {% else %}
+      <h2 class="daily-index-title">行业列表</h2>
+      {% endif %}
+    </div>
+    {% if sector_selected %}
+    <button type="button" class="industry-index-add" id="btn-add-report" aria-label="新建报告" title="新建报告">+</button>
+    {% else %}
+    <button type="button" class="industry-index-add" id="btn-add-sector" aria-label="添加行业" title="添加行业">+</button>
+    {% endif %}
+  </div>
+  <div class="daily-index-list">
+    {% if not sector_selected %}
+    <section class="industry-block industry-index-block" data-collapsed="false">
+      <nav class="sector-bubble-list" id="sector-nav-list" aria-label="行业分类">
+        {% for sector in sectors %}
+        <div class="sector-bubble-row {% if sector.key == sector_key %}active{% endif %}" data-search="{{ sector.label }}">
+          <a
+            href="/deep-reports/{{ sector.key }}"
+            class="sector-bubble"
+            title="{{ sector.label }}"
+          >
+            <span class="sector-bubble-label">{{ sector.label }}</span>
+          </a>
+          <button
+            type="button"
+            class="sector-rename-btn"
+            data-sector-key="{{ sector.key }}"
+            data-sector-label="{{ sector.label }}"
+            aria-label="重命名行业"
+            title="重命名"
+          ><span aria-hidden="true">✎</span><span class="sr-only">重命名</span></button>
+          <button
+            type="button"
+            class="sector-delete-btn"
+            data-sector-key="{{ sector.key }}"
+            data-sector-label="{{ sector.label }}"
+            aria-label="删除行业"
+            title="删除"
+          ><span aria-hidden="true">×</span><span class="sr-only">删除</span></button>
+        </div>
+        {% else %}
+        <p class="sector-bubble-empty">暂无行业，点击右上角 + 新建</p>
+        {% endfor %}
+      </nav>
+    </section>
+    {% else %}
+    <section class="industry-block industry-history-block">
+      <ul class="report-list">
+        {% for r in reports %}
+        <li class="report-list-item" data-search="{{ r.report_name or '' }} {{ r.industry_name }}">
+          <a href="/deep-reports/{{ sector_key }}?report_id={{ r.id }}" class="report-link {% if selected_report and selected_report.id == r.id %}active{% endif %}">
+            <span class="report-link-main">
+              <span class="report-link-name">{% if r.report_name %}{{ r.report_name }}{% else %}{{ r.industry_name }}{% endif %} · v{{ r.version }}</span>
+            </span>
+            <time class="report-created-at" datetime="{{ r.created_at|tokyo_time('%Y-%m-%dT%H:%M:%S+09:00') if r.created_at else '' }}">{{ r.created_at|tokyo_time }}</time>
+          </a>
+          <button
+            type="button"
+            class="report-rename-btn"
+            data-report-id="{{ r.id }}"
+            data-sector-key="{{ sector_key }}"
+            data-report-name="{{ r.report_name or '' }}"
+            data-default-name="{{ r.report_name or r.industry_name }}"
+            aria-label="重命名报告"
+            title="重命名"
+          >✎</button>
+          <button type="button" class="report-delete-btn" data-report-id="{{ r.id }}" data-sector-key="{{ sector_key }}" aria-label="删除报告" title="删除报告">删除</button>
+        </li>
+        {% else %}
+        <li class="empty-source">暂无报告</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+  </div>
+  {% if selected_report and selected_report.status == 'completed' %}
+  <div class="industry-sidebar-footer">
+    <a class="btn industry-export-word" href="/api/v1/industry/export/docx/{{ selected_report.id }}?sector={{ sector_key }}">导出 Word</a>
+  </div>
+  {% endif %}
+</aside>
+{% endblock %}
+
+{% block content %}
+<main class="industry-layout content-shell industry-agent-canvas">
+  <section class="industry-content" data-demo-fixed="{{ '1' if demo_fixed_report_available else '0' }}"{% if selected_report %} data-report-id="{{ selected_report.id }}" data-report-status="{{ selected_report.status }}" data-run-id="{{ selected_report.grounded_run_id or '' }}"{% endif %}>
+    <div id="industry-main-status" class="industry-main-status" hidden role="status" aria-live="polite"></div>
+    {% if sector_selected %}
+    {# Modified by DingJiaye: 2026-08-27 — 行业分析升级为智能体工作台导航，复用既有资料与报告接口。 #}
+    <section class="agent-workbench-header" aria-label="行业分析智能体工作台">
+      <div class="agent-identity">
+        <span class="agent-orb" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <span class="agent-eyebrow">INDUSTRY CREDIT AGENT</span>
+          <h1>行业分析智能体</h1>
+          <p>{{ sector_label }} · 将选定资料转化为可追溯的授信分析</p>
+        </div>
+      </div>
+      <div class="agent-header-actions">
+        {% if selected_report and selected_report.status == 'running' %}
+        <span class="agent-state is-running"><b></b> 正在推演</span>
+        {% elif selected_report and selected_report.status == 'completed' %}
+        <span class="agent-state is-ready"><b></b> 报告已就绪</span>
+        {% elif selected_report %}
+        <span class="agent-state"><b></b> 等待指令</span>
+        {% endif %}
+        <button type="button" class="agent-quiet-action" data-open-source-modal>添加资料</button>
+        <button type="button" class="agent-primary-action" data-open-report-modal>新建分析</button>
+      </div>
+      <ol class="agent-flow" aria-label="智能体工作流">
+        <li class="is-done"><span>01</span>资料库</li>
+        <li class="{% if drawer_selected_count %}is-done{% else %}is-active{% endif %}"><span>02</span>证据筛选</li>
+        <li class="{% if selected_report and selected_report.status == 'running' %}is-active{% elif selected_report and selected_report.status == 'completed' %}is-done{% endif %}"><span>03</span>智能推演</li>
+        <li class="{% if selected_report and selected_report.status == 'completed' %}is-done{% endif %}"><span>04</span>报告复核</li>
+      </ol>
+    </section>
+    {% endif %}
+    {% if not sector_selected and not prefer_client_redirect %}
+    <section class="industry-empty-state notebook-welcome">
+      <span class="notebook-welcome-mark" aria-hidden="true">⌁</span>
+      <span class="industry-kicker">行业授信分析工作台</span>
+      <h1>从一个行业开始</h1>
+      <p>在左侧确认行业并创建分析文档。文档、已保存来源和生成记录会按行业保留，方便下一次继续使用。</p>
+      <div class="notebook-welcome-actions" aria-label="开始操作">
+        <span>1 选择行业</span><span>2 创建文档</span><span>3 添加来源并生成</span>
+      </div>
+    </section>
+    {% elif sector_selected and not selected_report %}
+    <section class="industry-empty-state notebook-welcome">
+      <header class="industry-page-heading">
+        <span class="industry-kicker">{{ sector_label }} / 报告历史</span>
+        <h1>选择一份报告，或新建分析</h1>
+        <p>左侧显示该行业的历史记录。可先在来源栏检索或上传资料；新建并生成报告时会带入这些来源。</p>
+      </header>
+      <button type="button" class="btn notebook-open-report" data-open-report-modal>＋ 新建报告</button>
+    </section>
+    {% elif selected_report and selected_report.status == 'completed' %}
+    <p class="hint">生成模式：{{ selected_report.generation_mode or '历史记录/尚未记录' }}{% if selected_report.citation_validation_status %} · 引用校验：{{ selected_report.citation_validation_status }}{% endif %}</p>
+    {% if selected_report.supplement_search and generation_config.get('network_search_error') %}
+    <p class="citation-warning" role="alert">补充网络搜索未写入数据源：{{ generation_config.get('network_search_error') }}</p>
+    {% elif selected_report.supplement_search and (generation_config.get('network_search_added') == 0) and not drawer_sources %}
+    <p class="citation-warning" role="status">已勾选搜索数据源，但本次未写入来源。请检查搜索配置后重新生成。</p>
+    {% endif %}
+    {% if selected_report.report_name %}<h1 class="managed-report-name">{{ selected_report.report_name }} · v{{ selected_report.version }}</h1>{% endif %}
+    <div class="report-preview">
+      {{ display_report_html | safe }}
+      {% if selected_report.generation_mode != 'grounded' and 'report-source-list' not in (display_report_html or '') %}
+      {{ source_list_markup | safe }}
+      {% endif %}
+    </div>
+    {% if selected_report.generation_mode == 'grounded' and citation_context %}
+    <section class="report-audit-panel" aria-labelledby="report-audit-title">
+      <h2 id="report-audit-title">证据审计摘要</h2>
+      <dl class="audit-grid">
+        <div><dt>已展示引用</dt><dd>{{ citation_context.citations | length }}</dd></div>
+        <div><dt>验证证据</dt><dd>{{ citation_context.coverage.get('verified_evidence_count', '—') }}</dd></div>
+        <div><dt>独立来源</dt><dd>{{ citation_context.coverage.get('independent_source_count', '—') }}</dd></div>
+        <div><dt>未解决冲突</dt><dd>{{ citation_context.coverage.get('unresolved_conflict_count', 0) }}</dd></div>
+      </dl>
+      {% if citation_context.unresolved_conflicts %}<details><summary>未解决冲突（{{ citation_context.unresolved_conflicts | length }}）</summary><ul>{% for item in citation_context.unresolved_conflicts %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+      {% if citation_context.limitations %}<details><summary>报告限制（{{ citation_context.limitations | length }}）</summary><ul>{% for item in citation_context.limitations %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+      {% if citation_context.warnings %}<p class="citation-warning" role="alert">存在无法验证的引用，请重新生成报告后再使用。</p>{% endif %}
+    </section>
+    {% endif %}
+    <div id="industry-charts" class="chart-grid"></div>
+    <div class="notebook-composer" aria-label="重新生成报告">
+      <div>
+        <strong>用当前勾选来源重新生成</strong>
+        <span>新增来源不会改写当前正文</span>
+      </div>
+      <button
+        type="button"
+        class="btn notebook-generate-btn"
+        id="btn-generate-report"
+        data-report-id="{{ selected_report.id }}"
+        {% if drawer_selected_count == 0 and not demo_fixed_report_available %}disabled{% endif %}
+      >重新生成 →</button>
+    </div>
+    <section class="report-revision-chat" aria-label="使用 DeepSeek 调整报告">
+      <form id="report-revision-form" class="report-revision-composer" data-report-id="{{ selected_report.id }}">
+        <textarea id="report-revision-input" rows="1" maxlength="2000" placeholder="输入修改要求，例如：补充成本波动风险，并将风险展望改为更审慎的表述。" required></textarea>
+        <button type="submit" class="report-revision-submit" id="btn-revise-report" aria-label="提交修改要求">→</button>
+      </form>
+      <p class="hint" id="report-revision-msg" role="status"></p>
+    </section>
+    {% elif selected_report and selected_report.status == 'awaiting_approval' %}
+    <div class="approval-panel">
+      <h1 class="report-title">候选报告等待审批</h1>
+      <p>请核对正文引用、验证结果、覆盖缺口和冲突后再晋升。候选在晋升前不会写入正式报告正文。</p>
+      <p class="hint">生成模式：grounded · 引用校验：{{ selected_report.citation_validation_status or 'validated' }} · run #{{ selected_report.grounded_run_id }}</p>
+      {% if candidate_stale %}<p class="citation-warning" role="alert">候选证据或冲突快照已变化，必须重新生成，当前不能晋升。</p>{% endif %}
+      {% if candidate_validation %}
+      <dl class="audit-grid">
+        <div><dt>验证状态</dt><dd>{% if candidate_validation.get('valid') %}通过{% else %}未通过{% endif %}</dd></div>
+        <div><dt>错误</dt><dd>{{ candidate_validation.get('errors', []) | length }}</dd></div>
+        <div><dt>警告</dt><dd>{{ candidate_validation.get('warnings', []) | length }}</dd></div>
+        <div><dt>引用覆盖率</dt><dd>{{ candidate_validation.get('coverage', {}).get('factual_citation_coverage', '—') }}</dd></div>
+      </dl>
+      {% endif %}
+      {% if candidate_preview %}<div class="report-preview candidate-preview">{{ candidate_preview | safe }}</div>{% else %}<p class="empty">候选正文当前不可读取，请重新生成。</p>{% endif %}
+      {% if citation_context and citation_context.limitations %}<details open><summary>限制与缺口</summary><ul>{% for item in citation_context.limitations %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+      {% if citation_context and citation_context.unresolved_conflicts %}<details><summary>未解决冲突</summary><ul>{% for item in citation_context.unresolved_conflicts %}<li>{{ item }}</li>{% endfor %}</ul></details>{% endif %}
+      <label for="promotion-note">审批备注（必填）</label>
+      <textarea id="promotion-note" rows="4" maxlength="4000" placeholder="记录审批依据、关注事项或使用限制"></textarea>
+      <button type="button" class="btn" id="btn-promote-grounded" data-report-id="{{ selected_report.id }}" data-run-id="{{ selected_report.grounded_run_id }}" {% if candidate_stale or not candidate_preview %}disabled{% endif %}>晋升为正式报告</button>
+      <p class="hint" id="promotion-msg" role="status"></p>
+    </div>
+    {% elif selected_report and selected_report.status in ['draft', 'failed'] %}
+    <section class="industry-document-workspace notebook-workspace">
+      <header class="industry-page-heading document-heading notebook-workspace-heading">
+        <span class="industry-kicker">工作区 / {{ sector_label }}</span>
+        <h1>{{ selected_report.report_name or selected_report.industry_name }}</h1>
+        <p>v{{ selected_report.version }} · 资料与报告均保存在此行业下</p>
+      </header>
+      <div class="notebook-workspace-empty {% if drawer_usable_count %}has-sources{% endif %}">
+        <span class="notebook-welcome-mark" aria-hidden="true">⌁</span>
+        {% if drawer_usable_count %}
+        <h2>来源已就绪</h2>
+        <p>已添加 {{ drawer_usable_count }} 条可用来源，其中 {{ drawer_selected_count }} 条将用于本次分析。可继续在左侧调整选择范围。</p>
+        {% else %}
+        <h2>添加资料，开始分析</h2>
+        <p>在左侧来源栏搜索可信网页，或添加文件、网页与 PDF。资料提取完成后，勾选需要使用的来源。</p>
+        {% endif %}
+        <button type="button" class="btn notebook-open-source" data-open-source-modal>添加来源</button>
+      </div>
+      <div class="notebook-composer" aria-label="生成报告">
+        <div>
+          <strong>基于已选来源生成授信分析</strong>
+          <span>{{ drawer_selected_count }} 条来源已选中</span>
+        </div>
+        <button
+          type="button"
+          class="btn notebook-generate-btn"
+          id="btn-generate-report"
+          data-report-id="{{ selected_report.id }}"
+          {% if drawer_selected_count == 0 and not demo_fixed_report_available %}disabled{% endif %}
+        >生成报告 →</button>
+      </div>
+      <p class="hint notebook-generation-message" id="generation-msg"></p>
+      {% if selected_report.status == 'failed' %}
+      <p class="empty">上次生成失败：{{ selected_report.error_message }}</p>
+      <p class="hint">请检查数据源正文和勾选范围后，再次生成。</p>
+      {% endif %}
+    </section>
+    {% elif selected_report and selected_report.status == 'running' %}
+    {# Modified by DingJiaye: 2026-08-27 — 智能体后台运行时保留页面可操作性。 #}
+    <section class="industry-document-workspace notebook-workspace industry-agent-running" data-agent-report-id="{{ selected_report.id }}">
+      <header class="industry-page-heading document-heading notebook-workspace-heading">
+        <span class="industry-kicker">工作区 / {{ sector_label }}</span>
+        <h1>{{ selected_report.report_name or selected_report.industry_name }}</h1>
+        <p>智能体正在后台生成报告；您可以继续切换行业、添加来源或浏览已有资料。</p>
+      </header>
+      <div class="notebook-workspace-empty has-sources">
+        <span class="notebook-welcome-mark" aria-hidden="true">⌁</span>
+        <h2>正在生成报告</h2>
+        <p id="industry-running-message">正在整理已选来源并生成结构化分析，完成后会自动显示。</p>
+      </div>
+    </section>
+    {% else %}
+    {# 已选行业但未打开报告：主区空白 #}
+    {% endif %}
+  </section>
+</main>
+
+<dialog id="citation-dialog" class="citation-dialog" aria-labelledby="citation-dialog-title">
+  <div class="citation-dialog-header">
+    <h2 id="citation-dialog-title">证据详情</h2>
+    <button type="button" class="citation-close" aria-label="关闭证据详情">×</button>
+  </div>
+  <div id="citation-detail" class="citation-detail" aria-live="polite"></div>
+</dialog>
+
+<div class="about-modal hidden" id="sector-create-modal" hidden role="dialog" aria-modal="true" aria-labelledby="sector-create-title">
+  <div class="about-modal-card sector-create-card">
+    <div class="about-modal-header">
+      <h2 id="sector-create-title">新建行业</h2>
+      <button type="button" class="drawer-close" id="btn-close-sector-create" aria-label="关闭">×</button>
+    </div>
+    <div class="about-modal-body">
+      <label class="sector-create-label" for="sector-create-name">行业名称</label>
+      <input type="text" id="sector-create-name" class="sector-create-input" maxlength="64" placeholder="例如：新能源材料" autocomplete="off" />
+      <p class="hint" id="sector-create-msg"></p>
+      <div class="sector-create-actions">
+        <button type="button" class="btn secondary" id="btn-cancel-sector-create">取消</button>
+        <button type="button" class="btn" id="btn-confirm-sector-create">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="about-modal hidden" id="report-create-modal" hidden role="dialog" aria-modal="true" aria-labelledby="report-create-title">
+  <div class="about-modal-card sector-create-card">
+    <div class="about-modal-header">
+      <h2 id="report-create-title">新建报告</h2>
+      <button type="button" class="drawer-close" id="btn-close-report-create" aria-label="关闭">×</button>
+    </div>
+    <form class="about-modal-body new-document-form" id="analysis-form">
+      <label for="report-name-input">报告名称</label>
+      <input type="text" id="report-name-input" name="report_name" maxlength="256" value="{{ sector_default_industry_name }}授信分析" autocomplete="off" required />
+      <p class="hint" id="report-create-msg">创建后可在来源栏添加材料并生成报告。</p>
+      <div class="sector-create-actions">
+        <button type="button" class="btn secondary" id="btn-cancel-report-create">取消</button>
+        <button type="submit" class="btn" id="btn-create-report-draft">创建报告</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block source_panel_before_main %}
+{% if sector_selected %}
+{% include "partials/source_drawer.html" %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.INDUSTRY_BOOTSTRAP = {
+    redirect: {{ 'true' if prefer_client_redirect else 'false' }},
+    keys: {{ sector_keys | tojson }},
+    sectorKey: {{ sector_key | tojson }},
+    sectorSelected: {{ 'true' if sector_selected else 'false' }}
+  };
+</script>
+<script src="/static/js/industry.js?v=20260827-1"></script>
+{% if selected_report and selected_report.chart_specs %}
+<script>
+  window.INDUSTRY_CHARTS = {{ selected_report.chart_specs | safe }};
+</script>
+{% endif %}
+{% endblock %}

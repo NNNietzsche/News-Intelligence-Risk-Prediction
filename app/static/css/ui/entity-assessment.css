@@ -1,0 +1,451 @@
+/*
+ * 主体评估页面
+ * 负责：主体概览、最新消息、公开事件与财务信息展示。
+ * 修改记录
+ * - 2026-08-25 | DingJiaye | 新建主体评估独立样式入口。
+ * - 2026-08-25 | DingJiaye | 增加非上市主体替代财务口径提示与 PDF 网络失败说明。
+ * - 2026-08-25 | 主体索引展开时只在分类下方增减高度，避免滚动锚定把列表顶到顶部。
+ *
+ * 新增主体评估卡片、事件、财务区域样式请写入此文件。
+ */
+
+/* --------------------------------------------------------------------------
+ * AI 主体监测工作台
+ * 负责：将主体页的信息流组织为“对象、证据、研判”三层，保持原有数据与按钮逻辑。
+ * Modified by DingJiaye: 2026-08-27.
+ * -------------------------------------------------------------------------- */
+
+.app-agent-shell .entity-assessment-view {
+  max-width: 1460px;
+  margin: 0 auto;
+}
+
+.app-agent-shell .entity-header {
+  position: relative;
+  overflow: hidden;
+  margin: 6px 0 22px;
+  padding: 24px 26px;
+  border: 1px solid #d6e3ed;
+  border-radius: var(--ui-radius-lg);
+  background: linear-gradient(124deg, rgba(255,255,255,.96), rgba(242,248,253,.94));
+  box-shadow: var(--ui-shadow-card);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(235px, 300px);
+  gap: 24px;
+  align-items: start;
+}
+
+.app-agent-shell .entity-header::after {
+  content: "";
+  position: absolute;
+  top: -110px;
+  right: 3%;
+  width: 310px;
+  height: 310px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(101,157,202,.15), transparent 67%);
+  pointer-events: none;
+}
+
+.app-agent-shell .entity-title-row,
+.app-agent-shell .entity-header-tags, .app-agent-shell .entity-agent-live { position: relative; z-index: 1; }
+.app-agent-shell .entity-agent-eyebrow { display: block; margin-bottom: 8px; color: #6385a4; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.app-agent-shell .entity-title { color: #1c3855; letter-spacing: -.035em; }
+.app-agent-shell .industry-tag,
+.app-agent-shell .entity-header-tags > span:not(.credit-status-badge) {
+  border-color: #c9dced;
+  border-radius: 999px;
+  background: rgba(238,246,252,.92);
+  color: #456786;
+}
+
+.app-agent-shell .entity-monitoring-note-icon {
+  border-color: #86aaca;
+  background: #eaf3fb;
+  color: #315d8b;
+  box-shadow: 0 4px 12px rgba(43,87,128,.12);
+}
+
+/* Agent 工作轨迹：明确当前页面的证据核验与研判阶段。Modified by DingJiaye: 2026-08-28. */
+.app-agent-shell .entity-agent-live { padding-left: 18px; border-left: 1px solid rgba(184, 204, 221, .76); }
+.app-agent-shell .entity-agent-live > span { display: block; color: #7390aa; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+.app-agent-shell .entity-agent-live > strong { display: block; margin: 6px 0 12px; color: #345a7c; font-size: 13px; line-height: 1.45; }
+.app-agent-shell .entity-agent-workflow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(184, 204, 221, .68);
+}
+.app-agent-shell .entity-agent-workflow span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #98a7b4;
+  font-size: 12px;
+  font-weight: 650;
+}
+.app-agent-shell .entity-agent-workflow b { color: #b0becb; font-size: 12px; }
+.app-agent-shell .entity-agent-workflow .is-done { color: #456e92; }
+.app-agent-shell .entity-agent-workflow .is-done b { color: #548b70; }
+.app-agent-shell .entity-agent-workflow .is-active { color: #245d8f; }
+.app-agent-shell .entity-agent-workflow .is-active b { color: #4f8fc8; }
+
+@media (max-width: 680px) {
+  .app-agent-shell .entity-header { grid-template-columns: 1fr; }
+  .app-agent-shell .entity-agent-live { padding-top: 14px; padding-left: 0; border-top: 1px solid rgba(184, 204, 221, .76); border-left: 0; }
+  .app-agent-shell .entity-agent-workflow { gap: 8px 12px; }
+}
+
+.app-agent-shell .entity-latest-panel,
+.app-agent-shell .entity-events-section,
+.app-agent-shell .entity-financial-section {
+  border-color: #d8e4ee;
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-card);
+}
+
+.app-agent-shell .entity-risk-card {
+  border-radius: 16px;
+}
+
+.app-agent-shell .entity-risk-card::before {
+  width: 4px;
+  border-radius: 0 5px 5px 0;
+}
+
+.app-agent-shell .entity-tab,
+.app-agent-shell .entity-event-filter {
+  border-radius: 999px;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.app-agent-shell .entity-tab:hover,
+.app-agent-shell .entity-event-filter:hover { transform: translateY(-1px); }
+
+.app-agent-shell .fin-chart-card {
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(30,61,92,.04);
+}
+
+/* 折叠用裁切高度而不是 display:none，列表只在分类标题下方展开。 */
+.entity-sidebar .entity-index-scroll {
+  overflow-anchor: none;
+}
+
+.entity-sidebar .entity-index-group.is-collapsed > .entity-list {
+  display: flex;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 非上市主体的替代公开披露说明；避免将关联上市载体误读为主体独立财报。 */
+.fin-disclosure-note {
+  margin: 0.7rem 0 1rem;
+  padding: 0.72rem 0.9rem;
+  border-left: 3px solid #8fb4de;
+  border-radius: 0.4rem;
+  background: #f6f9fd;
+  color: #53657b;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+/* 修改记录：2026-08-25 | DingJiaye
+ * 财务披露对比：仅呈现配置中已核验、同口径的本次与上次披露，图表用于直观比较。 */
+.fin-comparison-summary {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #d9e5f1;
+  border-radius: 8px;
+  background: #fff;
+  color: #52677e;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.fin-comparison-summary strong {
+  color: #3c5d7f;
+  font-size: 12px;
+}
+
+.fin-comparison-summary p { margin: 4px 0 0; }
+
+.fin-context-metric { min-height: 168px; }
+
+.fin-comparison-row {
+  display: grid;
+  gap: 3px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #e9eef4;
+  color: #748194;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.fin-comparison-row b { font-weight: 650; }
+.fin-comparison-row a { color: #587da5; text-decoration: none; }
+.fin-comparison-row a:hover { text-decoration: underline; }
+.fin-comparison-row b.is-up { color: #2f7a59; }
+.fin-comparison-row b.is-down { color: #a5643f; }
+.fin-comparison-row b.is-flat { color: #718095; }
+
+.fin-comparison-note {
+  margin: 8px 0 0;
+  color: #68788b;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.fin-chart-section {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e8f0;
+}
+
+.fin-chart-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.fin-chart-section h4 { margin: 0; color: #344f6d; font-size: 14px; }
+.fin-chart-section-head span { color: #8290a0; font-size: 11px; }
+
+.fin-chart-grid {
+  display: grid;
+  /* 修改记录：2026-08-25 | DingJiaye：财务四类图表固定 2×2，保持可读性与留白。 */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fin-chart-card {
+  overflow: hidden;
+  border: 1px solid #e1e8f0;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.fin-chart-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ebf0f5;
+}
+
+.fin-chart-card-head h5 {
+  margin: 0;
+  color: #526d8a;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.fin-chart-toggle { display: inline-flex; flex: 0 0 auto; gap: 2px; padding: 2px; border-radius: 6px; background: #f1f5f9; }
+.fin-chart-toggle button { min-width: 38px; padding: 3px 6px; border: 0; border-radius: 4px; background: transparent; color: #8190a1; cursor: pointer; font: inherit; font-size: 10px; }
+.fin-chart-toggle button.active { background: #fff; box-shadow: 0 1px 2px rgba(38, 67, 103, .12); color: #416d9d; font-weight: 650; }
+
+.fin-chart-host {
+  min-height: 230px;
+  padding: 4px 8px 8px;
+}
+
+@media (max-width: 640px) {
+  .fin-chart-section-head { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .fin-context-metric { min-height: 0; }
+  .fin-chart-grid { grid-template-columns: 1fr; }
+}
+
+/* 修改记录：2026-08-25 | DingJiaye
+ * 重点客户实时监测：用标题旁 i 图标承载待核验监测规则，避免与新闻正文混排。 */
+.entity-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.entity-monitoring-note {
+  position: relative;
+  display: inline-flex;
+  outline: none;
+}
+
+.entity-monitoring-note-icon {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid #9bacc1;
+  border-radius: 50%;
+  color: #5c7798;
+  cursor: help;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.entity-monitoring-tooltip {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 10px);
+  left: 0;
+  display: none;
+  width: min(590px, calc(100vw - 64px));
+  max-height: min(510px, calc(100vh - 180px));
+  overflow: auto;
+  padding: 16px 18px;
+  border: 1px solid #cdd9e6;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(44, 62, 84, .18);
+  color: #53677f;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.entity-monitoring-note:hover .entity-monitoring-tooltip,
+.entity-monitoring-note:focus-within .entity-monitoring-tooltip {
+  display: block;
+}
+
+.entity-monitoring-tooltip strong {
+  display: block;
+  margin: 0 0 8px;
+  color: #405a78;
+  font-size: 14px;
+}
+
+.entity-monitoring-tooltip ul {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 14px;
+  padding-left: 18px;
+}
+
+.entity-monitoring-tooltip p {
+  margin: 0 0 8px;
+}
+
+.entity-monitoring-tooltip b {
+  display: inline-block;
+  min-width: 62px;
+  margin-right: 7px;
+}
+
+.entity-monitoring-tooltip p:nth-child(1) b { color: #b42318; }
+.entity-monitoring-tooltip p:nth-child(2) b { color: #a16207; }
+.entity-monitoring-tooltip p:nth-child(3) b { color: #8a6a13; }
+
+/* 修改记录：2026-08-25 | DingJiaye
+ * 主题评估事件检索：与分类标签共用筛选状态，只过滤当前页面已加载的公开事件。 */
+.ea-event-tools {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ea-event-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 220px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d5dfeb;
+  border-radius: 7px;
+  background: #fff;
+  color: #74869c;
+}
+
+.ea-event-search:focus-within {
+  border-color: #86a9d0;
+  box-shadow: 0 0 0 3px rgba(100, 144, 192, .12);
+}
+
+.ea-event-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #41556e;
+  font: inherit;
+  font-size: 13px;
+}
+
+.ea-event-search input::placeholder { color: #9ba8b7; }
+
+@media (max-width: 760px) {
+  .ea-panel-head:has(.ea-event-tools) { align-items: flex-start; }
+  .ea-event-tools { display: grid; justify-items: start; gap: 8px; }
+  .ea-event-search { width: min(250px, 100%); }
+}
+/* 主体事件等级灯：普通=灰、关注=黄、风险=红；不将风险类型标签染成黄。
+   Modified by DingJiaye: 2026-08-28. */
+body.page-entity_assessment .risk-level-tag.risk-tag-低 { color: #687786 !important; background: #eef1f4 !important; border-color: #d4dce3 !important; }
+body.page-entity_assessment .risk-level-tag.risk-tag-中 { color: #946d12 !important; background: #fff3cd !important; border-color: #edcf7c !important; }
+body.page-entity_assessment .risk-level-tag.risk-tag-高,
+body.page-entity_assessment .risk-level-tag.risk-tag-极高 { color: #a13b3b !important; background: #fde8e7 !important; border-color: #e9aaa7 !important; }
+body.page-entity_assessment .risk-level-tag.risk-tag-中::before { animation: risk-signal-pulse 1.9s ease-in-out infinite; }
+body.page-entity_assessment .risk-level-tag.risk-tag-高::before,
+body.page-entity_assessment .risk-level-tag.risk-tag-极高::before { animation: risk-signal-pulse 1.25s ease-in-out infinite; }
+/* 主体风险总览与下方事件列表使用同一风险口径。
+   Modified by DingJiaye: 2026-08-28. */
+.entity-agent-overview .entity-monitor-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.entity-agent-overview .entity-monitor-metrics > div { position: relative; gap: 4px; }
+.entity-agent-overview .entity-monitor-metrics > div::before { content: ""; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: #81a9ca; }
+.entity-agent-overview .entity-monitor-metrics .metric-alerts::before { background: #d1a23a; }
+.entity-agent-overview .entity-monitor-metrics .metric-risk::before { background: #c8645c; }
+.entity-agent-overview .entity-monitor-metrics small { color: #91a0ad; font-size: 10px; }
+
+/* 近三个月公开信息事件：只对 AI 判定为关注或风险的报道展示呼吸灯标签。
+   Modified by DingJiaye: 2026-08-28. */
+.entity-event-signal { margin-right: .18rem; }
+.entity-event-signal.risk-tag-中::before { animation: risk-signal-pulse 1.9s ease-in-out infinite; }
+.entity-event-signal.risk-tag-高::before,
+.entity-event-signal.risk-tag-极高::before { animation: risk-signal-pulse 1.25s ease-in-out infinite; }
+
+/* 主体索引状态：由近三个月新闻实时归并，不展示旧的“低/预警”等静态等级。
+   Modified by DingJiaye: 2026-08-28. */
+.entity-news-signal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.entity-news-signal-neutral { color: #748391; }
+.entity-news-signal-watch { color: #a87b17; }
+.entity-news-signal-risk { color: #b74343; }
+.entity-news-signal-watch::before,
+.entity-news-signal-risk::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.entity-news-signal-watch::before { animation: risk-signal-pulse 1.9s ease-in-out infinite; }
+.entity-news-signal-risk::before { animation: risk-signal-pulse 1.25s ease-in-out infinite; }
+.entity-header-signal { border-radius: 999px; }
+.entity-header-signal.entity-news-signal-neutral { background: #f0f3f5; border-color: #d9e0e5; }
+.entity-header-signal.entity-news-signal-watch { background: #fff3cd; border-color: #edcf7c; }
+.entity-header-signal.entity-news-signal-risk { background: #fde8e7; border-color: #e9aaa7; }

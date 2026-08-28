@@ -1,0 +1,241 @@
+/*
+ * 新闻汇总（中东日报 / 大型企业 / 宏观市场）
+ * 负责：新闻卡片、风险标签、筛选、时间轴与空状态。
+ * 修改记录
+ * - 2026-08-25 | DingJiaye | 从 dashboard.css 迁移 筛选无匹配 提示
+ */
+
+.module-filter-empty {
+  margin: 0.5rem 0 0;
+  padding: 0.65rem 0.8rem;
+  border: 1px dashed var(--ui-border);
+  border-radius: var(--ui-radius-sm);
+  color: var(--ui-muted);
+  font-size: 13px;
+  background: #f8fafc;
+}
+
+/* 修改记录：2026-08-25 | DingJiaye
+ * 新闻汇总顶部日报报告：AI 不可用时仍展示基于已入库新闻的可追溯汇总。 */
+.daily-summary-report {
+  margin: 0 0 18px;
+  padding: 18px 20px;
+  border: 1px solid #dce5ee;
+  border-radius: 12px;
+  background: linear-gradient(115deg, #fbfdff 0%, #f5f9fd 100%);
+  box-shadow: 0 4px 14px rgba(44, 67, 93, .045);
+}
+
+.daily-summary-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.daily-summary-eyebrow { display: block; margin-bottom: 4px; color: #6a86a5; font-size: 11px; font-weight: 650; letter-spacing: .08em; }
+.daily-summary-head h2 { margin: 0; color: #304b68; font-size: 18px; }
+.daily-summary-meta { margin-top: 3px; color: #7b8a9d; font-size: 12px; white-space: nowrap; }
+.daily-summary-overview { margin: 12px 0 15px; color: #516276; font-size: 14px; line-height: 1.8; }
+
+.daily-summary-sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.daily-summary-section {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #e1e8f0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .82);
+}
+
+.daily-summary-section h3 { margin: 0 0 7px; color: #3e5c7c; font-size: 14px; }
+.daily-summary-section > p { margin: 0; color: #5d6f84; font-size: 12px; line-height: 1.7; }
+.daily-summary-b { border-top: 3px solid #d79d74; }
+.daily-summary-c { border-top: 3px solid #7ba3ce; }
+.daily-summary-d { border-top: 3px solid #83a993; }
+.daily-summary-points { margin-top: 10px; padding-top: 9px; border-top: 1px solid #edf1f5; }
+.daily-summary-points > span { color: #72859a; font-size: 11px; font-weight: 650; }
+.daily-summary-points ul { display: grid; gap: 4px; margin: 5px 0 0; padding-left: 16px; color: #61748a; font-size: 11px; line-height: 1.55; }
+
+/* Modified by DingJiaye: 2026-08-27 — 风险情报智能体工作台。
+ * 日报继续采用三板块与时间线数据，仅将其组织为智能体任务、信号与复核流。 */
+.daily-agent-canvas {
+  background:
+    radial-gradient(circle at 82% -8%, rgba(117, 157, 195, .19), transparent 27rem),
+    linear-gradient(180deg, #f4f7fa, #f7f9fb 40%, #f2f5f8);
+}
+
+.daily-agent-canvas .content {
+  max-width: 1460px;
+  margin: 0 auto;
+  padding-bottom: 3rem;
+}
+
+.daily-agent-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  margin: 1rem 0 1.25rem;
+  padding: 1.25rem 1.35rem 0;
+  border: 1px solid rgba(207, 220, 232, .96);
+  border-radius: 18px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 16px 36px rgba(40, 64, 89, .065);
+  backdrop-filter: blur(14px);
+  animation: daily-agent-enter 380ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.daily-agent-hero::after {
+  content: "";
+  position: absolute;
+  top: -9.5rem;
+  right: 9rem;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(120, 163, 203, .16), transparent 68%);
+  pointer-events: none;
+}
+
+.daily-agent-identity { position: relative; z-index: 1; display: flex; align-items: center; gap: .82rem; }
+.daily-agent-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #294e70, #6a96bd);
+  box-shadow: 0 9px 19px rgba(50, 85, 119, .2);
+}
+.daily-agent-mark i { width: 4px; height: 13px; border-radius: 4px; background: #fff; }
+.daily-agent-mark i:nth-child(2) { height: 22px; opacity: .78; }
+.daily-agent-mark i:nth-child(3) { height: 9px; opacity: .6; }
+.daily-agent-eyebrow { display: block; color: #6a8198; font-size: .64rem; font-weight: 800; letter-spacing: .13em; }
+.daily-agent-identity h1 { margin: .22rem 0 0; color: #293e51; font-size: clamp(1.15rem, 1.8vw, 1.5rem); letter-spacing: -.02em; }
+.daily-agent-identity p { margin: .28rem 0 0; color: #718195; font-size: .82rem; line-height: 1.55; }
+
+.daily-agent-actions { position: relative; z-index: 1; display: flex; align-items: center; justify-content: flex-end; gap: .48rem; }
+.daily-agent-state { display: inline-flex; align-items: center; gap: .35rem; padding: .44rem .62rem; border: 1px solid #cae0d4; border-radius: 999px; color: #347154; background: #f2faf5; font-size: .74rem; font-weight: 750; white-space: nowrap; }
+.daily-agent-state b { width: 6px; height: 6px; border-radius: 50%; background: #4da774; animation: daily-agent-pulse 1.35s ease-in-out infinite; }
+.daily-agent-quiet, .daily-agent-primary { min-height: 31px; padding: .42rem .68rem; border-radius: 8px; font-size: .76rem; font-weight: 750; cursor: pointer; transition: transform .16s ease, background .16s ease, box-shadow .16s ease; }
+.daily-agent-quiet { border: 1px solid #d3e0ea; color: #4c6d8a; background: #fff; }
+.daily-agent-primary { border: 1px solid #345d84; color: #fff; background: #416c94; box-shadow: 0 5px 12px rgba(52,92,130,.18); }
+.daily-agent-quiet:hover, .daily-agent-primary:hover { transform: translateY(-1px); }
+.daily-agent-quiet:hover { background: #f3f8fc; }
+.daily-agent-primary:hover { background: #355f86; }
+
+.daily-agent-track { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .35rem; margin: .15rem -1.35rem 0; padding: .62rem 1.35rem; border-top: 1px solid #e8eef3; }
+.daily-agent-track span { display: flex; align-items: center; gap: .43rem; color: #9aa9b7; font-size: .74rem; font-weight: 700; }
+.daily-agent-track b { color: #a8b8c7; font-size: .64rem; font-variant-numeric: tabular-nums; }
+.daily-agent-track .is-done { color: #4a7093; }
+.daily-agent-track .is-done b { color: #569079; }
+.daily-agent-track .is-active { color: #37658f; }
+.daily-agent-track .is-active b { color: #5589ba; }
+
+.daily-agent-canvas .daily-summary-report {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.4rem;
+  padding: 1.3rem;
+  border-color: #d6e3ed;
+  border-radius: 18px;
+  background: rgba(255,255,255,.91);
+  box-shadow: 0 14px 32px rgba(41, 66, 91, .055);
+}
+.daily-agent-canvas .daily-summary-report::before { content: ""; position: absolute; left: 0; top: 1.25rem; bottom: 1.25rem; width: 3px; border-radius: 3px; background: linear-gradient(#5e91bd, #8eb0cd); }
+.daily-agent-canvas .daily-summary-head { padding-left: .3rem; }
+.daily-agent-canvas .daily-summary-head h2 { color: #2d4862; font-size: 1.25rem; }
+.daily-agent-canvas .daily-summary-overview { padding-left: .3rem; color: #4e6278; }
+.daily-agent-canvas .daily-summary-section { border-radius: 12px; box-shadow: 0 4px 13px rgba(41, 66, 91, .035); transition: transform .18s ease, box-shadow .18s ease; }
+.daily-agent-canvas .daily-summary-section:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(41, 66, 91, .08); }
+
+.daily-agent-canvas .module-panel { scroll-margin-top: 1.2rem; }
+.daily-agent-canvas .module-header { display: flex; align-items: center; justify-content: flex-start !important; width: 100%; gap: .55rem; text-align: left; }
+/* 板块标题置于新闻流起始位置；移除与风险灯号容易混淆的装饰点。
+   Modified by DingJiaye: 2026-08-28. */
+.daily-agent-canvas .module-header::before { content: none; display: none; }
+.module-chip { display: inline-flex; align-items: center; padding: 3px 7px; border: 1px solid; border-radius: 4px; font-size: 11px; font-weight: 800; line-height: 1.2; }.module-chip-b { color: #9b633e; border-color: #e2bea4; background: #fdf4ed; }.module-chip-c { color: #416d9b; border-color: #b6d0e8; background: #eff6fc; }.module-chip-d { color: #4d7860; border-color: #bbd6c4; background: #f0f8f2; }
+.module-title-prefix { display: inline-flex; align-items: center; margin: 0 .5rem .1rem 0; padding: .14rem .42rem; border: 1px solid; border-radius: 4px; font-size: .68rem; font-weight: 800; line-height: 1.25; vertical-align: middle; white-space: nowrap; }
+.daily-agent-canvas .module-panel-b .entry-card.risk-event-card { border-top: 2px solid #d79d74; }.daily-agent-canvas .module-panel-c .entry-card.risk-event-card { border-top: 2px solid #7ba3ce; }.daily-agent-canvas .module-panel-d .entry-card.risk-event-card { border-top: 2px solid #83a993; }
+/* 卡片边条表示板块，不表示风险：与顶部板块色保持一致；风险仅由标题后的灯号表达。
+   Modified by DingJiaye: 2026-08-28. */
+.daily-agent-canvas .module-panel-b .entry-card.risk-event-card::before { background: #d79d74 !important; }
+.daily-agent-canvas .module-panel-c .entry-card.risk-event-card::before { background: #7ba3ce !important; }
+.daily-agent-canvas .module-panel-d .entry-card.risk-event-card::before { background: #83a993 !important; }
+.daily-agent-canvas .module-panel-b .entry-card.risk-event-card { border-left-color: #d79d74 !important; }
+.daily-agent-canvas .module-panel-c .entry-card.risk-event-card { border-left-color: #7ba3ce !important; }
+.daily-agent-canvas .module-panel-d .entry-card.risk-event-card { border-left-color: #83a993 !important; }
+.daily-agent-canvas .entry-card.risk-event-card {
+  position: relative;
+  overflow: hidden;
+  border-color: #d9e4ed;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(42, 66, 90, .045);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.daily-agent-canvas .entry-card.risk-event-card:hover { transform: translateY(-3px); border-color: #b9cedf; box-shadow: 0 17px 32px rgba(42,66,90,.10); }
+.daily-agent-canvas .entry-card.risk-event-card::before { content: ""; position: absolute; top: 1.1rem; left: 0; width: 3px; height: 2.2rem; border-radius: 0 4px 4px 0; background: #87b0d9; }
+.daily-agent-canvas .risk-event-title { padding-left: .7rem; color: #2b4053; }
+
+/* Modified by DingJiaye: 2026-08-27 — AI 自主核验状态，替代易造成误解的本地关键词筛选。 */
+.daily-agent-side-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #d7e5f0;
+  border-radius: 10px;
+  color: #536f8e;
+  background: #f7fbff;
+  font-size: 12px;
+  font-weight: 650;
+}
+.daily-agent-side-status span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4d8bc7;
+  box-shadow: 0 0 0 4px rgba(77, 139, 199, .12);
+}
+.daily-agent-verified {
+  color: #66809a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@keyframes daily-agent-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes daily-agent-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(77,167,116,.28); } 50% { box-shadow: 0 0 0 5px rgba(77,167,116,0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-agent-hero, .daily-agent-state b { animation: none; }
+  .daily-agent-quiet, .daily-agent-primary, .daily-agent-canvas .daily-summary-section, .daily-agent-canvas .entry-card.risk-event-card { transition: none; }
+}
+
+@media (max-width: 640px) {
+  .daily-summary-report { padding: 15px; }
+  .daily-summary-head { flex-direction: column; gap: 5px; }
+  .daily-summary-meta { margin-top: 0; white-space: normal; }
+  .daily-summary-sections { grid-template-columns: 1fr; }
+  .daily-agent-hero { grid-template-columns: 1fr; padding: 1rem 1rem 0; }
+  .daily-agent-actions { justify-content: flex-start; flex-wrap: wrap; }
+  .daily-agent-track { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: .15rem -1rem 0; padding: .62rem 1rem; }
+}
+/* 灯号等级只由 risk-level-tag 承担；风险类型与“风险提示”保持中性。
+   Modified by DingJiaye: 2026-08-28. */
+body.daily-news-ui .risk-level-tag.risk-tag-低 { color: #687786 !important; background: #eef1f4 !important; border-color: #d4dce3 !important; }
+body.daily-news-ui .risk-level-tag.risk-tag-中 { color: #946d12 !important; background: #fff3cd !important; border-color: #edcf7c !important; }
+body.daily-news-ui .risk-level-tag.risk-tag-高,
+body.daily-news-ui .risk-level-tag.risk-tag-极高 { color: #a13b3b !important; background: #fde8e7 !important; border-color: #e9aaa7 !important; }
+body.daily-news-ui .risk-level-tag.risk-tag-中::before { animation: risk-signal-pulse 1.9s ease-in-out infinite; }
+body.daily-news-ui .risk-level-tag.risk-tag-高::before,
+body.daily-news-ui .risk-level-tag.risk-tag-极高::before { animation: risk-signal-pulse 1.25s ease-in-out infinite; }

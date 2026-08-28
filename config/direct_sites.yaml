@@ -1,0 +1,14 @@
+# 无 RSS 的直连网站 HTML 列表采集（改完可 POST /api/v1/pipeline/direct-sites/reload）
+#
+# 说明：
+# - 新浪财经 7×24：专用采集器 sina_724_collector（模块 B/D）
+# - 无 RSS 的行业背景页：主体信源含 COCOBOD / ICCO / 欧盟观测站 / 百货协会时启用 godiva_source_collector
+# - 其它无 RSS 站点可在此用 CSS 选择器配置：
+#   list_url / modules / item_selector / title_selector / link_selector
+#   date_selector / snippet_selector / base_url / headers / encoding
+
+defaults:
+  max_items_per_site: 20
+  timeout_seconds: 30
+
+sites: []

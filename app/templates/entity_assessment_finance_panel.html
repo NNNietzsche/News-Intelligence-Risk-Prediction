@@ -1,0 +1,138 @@
+<section class="ea-panel" id="ea-finance-panel" aria-labelledby="finance-panel-title">
+  <div class="ea-panel-head">
+    <h2 id="finance-panel-title">财务信息</h2>
+    <span class="ea-panel-count">{% if financials.status != 'linked' %}待接入该主体数据源{% endif %}</span>
+  </div>
+  <p class="fin-source-bar{% if financials.is_alternative_context %} fin-source-bar-context{% endif %}">
+    数据来源：{{ financials.source_label }}
+    ·
+    {% if financials.source_page_url %}
+    <a
+      class="fin-source-link"
+      href="{{ financials.source_page_url }}"
+      target="_blank"
+      rel="noopener noreferrer"
+    >{% if financials.uses_kabutan_page %}查看原始整理页{% elif financials.latest_pdf_url and financials.source_page_url == financials.latest_pdf_url %}当期报告 PDF{% else %}查看原始整理页{% endif %}</a>
+    {% if financials.pdf_rows_used %}
+    <span class="fin-source-live">已从 PDF 摘录</span>
+    {% elif financials.kabutan_ok %}
+    <span class="fin-source-live">已抓取</span>
+    {% elif financials.kabutan_error %}
+    <span class="fin-source-live muted">抓取失败</span>
+    {% endif %}
+    {% else %}
+    <span class="fin-source-link muted" title="该主体原始整理页待接入">查看原始整理页</span>
+    {% endif %}
+    {% if financials.latest_pdf_url and financials.latest_pdf_url != financials.source_page_url %}
+    ·
+    <a
+      class="fin-source-link"
+      href="{{ financials.latest_pdf_url }}"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="{{ financials.latest_pdf_title or '当期报告 PDF' }}"
+    >当期报告 PDF</a>
+    {% if financials.latest_pdf_source == 'discovered' %}
+    <span class="fin-source-live">实时定位</span>
+    {% elif financials.latest_pdf_source == 'fallback' %}
+    <span class="fin-source-live muted">备用链接</span>
+    {% endif %}
+    {% endif %}
+  </p>
+  {% if financials.context_notice and not financials.is_alternative_context %}
+  <p class="fin-disclosure-note">{{ financials.context_notice }}</p>
+  {% endif %}
+  {% if financials.is_alternative_context %}
+  <section class="fin-context" aria-label="可核验经营与财务替代指标">
+    <header class="fin-context-head">
+      <div>
+        <span class="fin-context-eyebrow">官方披露 · 同口径比较</span>
+        <h3>{{ financials.comparison_title or '集团经营与偿债背景' }}</h3>
+      </div>
+      <span class="fin-context-badge">非独立财报</span>
+    </header>
+    <p class="fin-context-notice">{{ financials.context_notice or '该主体未公开独立财务报表；以下为关联集团公开披露，仅作经营与偿债背景，不等同于该主体独立财务数据。' }}</p>
+    {% if financials.comparison_summary %}
+    <div class="fin-comparison-summary">
+      <strong>披露解读</strong>
+      <p>{{ financials.comparison_summary }}</p>
+    </div>
+    {% endif %}
+    <div class="fin-context-grid">
+      {% for metric in financials.context_metrics %}
+      <article class="fin-context-metric">
+        <p class="fin-context-label">{{ metric.label }}</p>
+        <strong>{{ metric.value }}</strong>
+        <div class="fin-context-meta">
+          {% if metric.as_of %}<span>{{ metric.as_of }}</span>{% endif %}
+          {% if metric.note %}<small>{{ metric.note }}</small>{% endif %}
+        </div>
+        {% if metric.previous_value %}
+        <div class="fin-comparison-row">
+          <span>上次披露：{{ metric.previous_value }}{% if metric.previous_as_of %}（{{ metric.previous_as_of }}）{% endif %}{% if metric.previous_url %} <a href="{{ metric.previous_url }}" target="_blank" rel="noopener noreferrer">原文</a>{% endif %}</span>
+          {% if metric.change_display %}<b class="is-{{ metric.change_direction }}">{{ metric.change_display }}</b>{% endif %}
+        </div>
+        {% endif %}
+        {% if metric.comparison_note %}<p class="fin-comparison-note">{{ metric.comparison_note }}</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% if financials.chart_metrics %}
+    <section class="fin-chart-section" aria-label="财务指标对比图表">
+      <div class="fin-chart-section-head">
+        <h4>披露对比图表</h4>
+        <span>当前披露与上一可比披露</span>
+      </div>
+      <div id="entity-financial-charts" class="fin-chart-grid"></div>
+    </section>
+    <script id="entity-financial-chart-data" type="application/json">{{ financials.chart_metrics | tojson }}</script>
+    {% endif %}
+    {% if financials.source_page_url %}
+    <footer class="fin-context-foot">
+      <span>全部指标均来自同一份母公司官方披露</span>
+      <a href="{{ financials.source_page_url }}" target="_blank" rel="noopener noreferrer">查看官方原文 <span aria-hidden="true">↗</span></a>
+    </footer>
+    {% endif %}
+  </section>
+  {% else %}
+  <div class="fin-statement-stack">
+    {% for stmt in financials.statements %}
+    <article class="fin-card" data-fin-panel="{{ stmt.key }}">
+      <header class="fin-card-head">
+        <h3 class="fin-card-title">{{ stmt.title }}</h3>
+        <p class="fin-card-unit">{{ financials.unit }}</p>
+      </header>
+      <div class="fin-table-wrap">
+        <table class="fin-table">
+          <thead>
+            <tr>
+              {% for col in stmt.columns %}
+              <th scope="col" class="fin-align-{{ col.align }}">{{ col.label }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% if stmt.rows %}
+              {% for row in stmt.rows %}
+              <tr>
+                {% for col in stmt.columns %}
+                {% set cell = row.get(col.key) %}
+                <td class="fin-align-{{ col.align }}{% if not cell %} fin-empty-cell{% endif %}{% if col.key == 'period' %} fin-period{% endif %}">
+                  {{ cell or '-' }}
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            {% else %}
+            <tr class="fin-empty-row">
+              <td colspan="{{ stmt.columns|length }}">{% if financials.pdf_parse_error == 'fetch_failed' %}官方财报 PDF 暂时无法下载（请检查服务器网络或 DNS），恢复连接后刷新资讯即可重试{% elif financials.kabutan_error and not financials.pdf_parse_ok %}株探通期表暂不可用{% if financials.latest_pdf_url %}，已尝试解析当期 PDF{% endif %}，可打开原始页核对{% elif financials.pdf_parse_error %}当期报告已定位，数字未能从 PDF 可靠摘录，请打开原文核对{% elif financials.latest_pdf_url %}已定位当期报告 PDF，三表数字待从报表解析后展示{% else %}报表数据接入后按报告期展示{% endif %}</td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>

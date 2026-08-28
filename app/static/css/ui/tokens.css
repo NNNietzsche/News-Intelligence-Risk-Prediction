@@ -1,0 +1,30 @@
+/*
+ * RiskIntel UI Tokens
+ * 负责：全站色板、边框、圆角、阴影等可复用视觉变量。
+ * 修改记录
+ * - 2026-08-25 | DingJiaye | 建立统一色板、间距、圆角与阴影变量，供各页面独立样式复用。
+ */
+
+:root {
+  /* Modified by DingJiaye: 2026-08-27 — AI 智能体工作台：深石墨、钴蓝与暖金强调色。 */
+  --ui-ink: #17263a;
+  --ui-muted: #718197;
+  --ui-border: #dce5ef;
+  --ui-surface: #ffffff;
+  --ui-canvas: #eef3f8;
+  --ui-primary: #315d8b;
+  --ui-primary-strong: #173c64;
+  --ui-primary-soft: #e8f1fa;
+  --ui-info: #68a2d6;
+  --ui-warning: #d89b58;
+  --ui-danger: #c86c72;
+  --ui-success: #4d9b79;
+  --ui-navy: #102238;
+  --ui-navy-2: #1b3552;
+  --ui-gold: #c99a58;
+  --ui-radius-sm: 10px;
+  --ui-radius-md: 16px;
+  --ui-radius-lg: 22px;
+  --ui-shadow-card: 0 14px 34px rgba(27, 52, 78, 0.08);
+  --ui-shadow-float: 0 22px 52px rgba(20, 43, 69, 0.15);
+}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}国际评级 — {{ app_name }}{% endblock %}
+
+{% block page_sidebar %}
+<aside class="sidebar page-rail ir-sidebar" aria-label="发行体索引">
+  <label class="daily-search" aria-label="搜索发行体">
+    <input
+      type="search"
+      id="ir-search-input"
+      class="ir-search-input"
+      placeholder="搜索发行体…"
+      autocomplete="off"
+    />
+    <button type="button" class="ir-search-clear" id="ir-search-clear" title="清空搜索" aria-label="清空搜索" hidden>×</button>
+    <span aria-hidden="true">⌕</span>
+  </label>
+  <button
+    type="button"
+    class="daily-index-title"
+    id="ir-index-toggle"
+    aria-expanded="true"
+    aria-controls="ir-index-list"
+  >
+    <span class="daily-index-chevron" aria-hidden="true"></span>
+    索引
+  </button>
+  <div class="daily-index-list ir-sidebar-body" id="ir-index-list">
+    <div class="ir-tree" id="ir-tree" role="tree"></div>
+    <p class="hint ir-search-empty" id="ir-search-empty" hidden>无匹配发行体</p>
+  </div>
+</aside>
+{% endblock %}
+
+{% block content %}
+<main class="layout content-shell ir-main">
+  <section class="content ir-content">
+    <div class="ir-table-toolbar" aria-label="国际评级数据操作">
+      <p class="hint" id="ir-action-msg" aria-live="polite"></p>
+      <button type="button" class="ir-import-button" id="btn-ir-import">导入 Excel</button>
+      <input id="ir-excel-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden />
+    </div>
+
+    <div class="ir-table-wrap" id="ir-table-wrap">
+      <table class="ir-table" id="ir-table">
+        <thead>
+          <tr>
+            <th class="col-issuer">发行体</th>
+            <th class="col-rating-pack">三大评级</th>
+            <th class="col-change">评级变动</th>
+            <th class="col-signal">市场信号</th>
+            <th class="col-rss">来源</th>
+          </tr>
+        </thead>
+        <tbody id="ir-table-body"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="/static/js/intl_ratings.js?v=20260828-3"></script>
+{% endblock %}

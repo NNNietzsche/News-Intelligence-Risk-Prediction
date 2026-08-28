@@ -1,0 +1,48 @@
+# 本机文件，禁止用 Git / U 盘 / 网盘在电脑之间拷贝。
+# 中文电脑和日文电脑各自生成，互不同步。
+
+# 虚拟环境（含本机 Python 绝对路径，拷贝后会 invalid）
+venv/
+.venv/
+
+# 密钥与编辑器本机设置
+.env
+.idea/
+.vscode/
+.aiignore
+
+# 依赖缓存与测试缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# 本地数据库与上传/导出（保证各自电脑数据独立）
+tmp/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+data/industry_sectors.json
+data/uploads/
+data/exports/
+data/intl_ratings/output/
+data/intl_ratings/sec_edgar/
+data/intl_ratings/latest.json
+data/intl_ratings/entity_map_cache.json
+logs/raw_responses/
+logs/intl_ratings/
+logs/error.log
+*.log
+.venv/
+.env
+__pycache__/
+*.pyc
+*.db
+.DS_Store

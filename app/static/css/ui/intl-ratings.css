@@ -1,0 +1,310 @@
+/*
+ * 国际评级页面
+ * 负责：评级概览、评级变动、市场信号与相关表格。
+ * 修改记录
+ * - 2026-08-25 | DingJiaye | 新建国际评级独立样式入口。
+ * - 2026-08-25 | wusicheng | 相对原 main：恢复左侧可折叠索引及箭头样式。
+ */
+
+/* --------------------------------------------------------------------------
+ * AI 评级监测工作台
+ * 负责：提升评级快照、市场信号与明细表的可扫描性，不修改评级计算逻辑。
+ * Modified by DingJiaye: 2026-08-27.
+ * -------------------------------------------------------------------------- */
+
+.app-agent-shell .ir-page-header {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 24px;
+  border: 1px solid #d7e4ee;
+  border-radius: var(--ui-radius-lg);
+  background: linear-gradient(122deg, #fff, #f0f7fc);
+  box-shadow: var(--ui-shadow-card);
+}
+
+.app-agent-shell .ir-page-header::after {
+  content: "";
+  position: absolute;
+  right: 8%; top: -80px;
+  width: 230px; height: 230px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(83,143,193,.16), transparent 68%);
+  pointer-events: none;
+}
+
+.app-agent-shell .ir-page-header > * { position: relative; z-index: 1; }
+.app-agent-shell .ir-page-title { color: #1d3956; letter-spacing: -.025em; }
+.app-agent-shell .ir-header-status { border-radius: 999px; background: #eef6fb; color: #467292; }
+.app-agent-shell .ir-overview { border-radius: 16px; background: rgba(255,255,255,.9); }
+.app-agent-shell .ir-overview-item { transition: transform .18s ease, background .18s ease; }
+.app-agent-shell .ir-overview-item:hover { transform: translateY(-2px); background: #f5faff; }
+.app-agent-shell .ir-filter-bar { padding: 8px; border: 1px solid #dbe6ef; border-radius: 14px; background: rgba(255,255,255,.72); }
+.app-agent-shell .ir-filter { border-radius: 9px; }
+.app-agent-shell .ir-filter.active { background: linear-gradient(135deg, #315d8b, #234b72); box-shadow: 0 6px 13px rgba(42,82,120,.15); }
+.app-agent-shell .ir-table-wrap { border-radius: 16px; background: rgba(255,255,255,.94); }
+.app-agent-shell .ir-table thead th { background: #f1f6fa; color: #42637f; }
+
+.ir-sidebar .daily-index-title[aria-controls] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1.5rem 0 0.8rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+  font-family: var(--font-cjk);
+  font-size: 10pt;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.ir-sidebar .daily-index-chevron {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid #000;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ir-sidebar .daily-index-title.is-collapsed .daily-index-chevron {
+  transform: rotate(-90deg);
+}
+
+/* 国际评级采用固定工作区：表格与发行体索引各自滚动，避免内容被外层
+   app-main 的 overflow:hidden 裁切。Modified by DingJiaye: 2026-08-25. */
+.app-main:has(.ir-main) {
+  min-height: 0;
+}
+
+.ir-main {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ir-content {
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.ir-table-wrap {
+  min-height: 12rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-shell > .ir-sidebar.page-rail .ir-sidebar-body {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --------------------------------------------------------------------------
+ * 评级监测终端视觉层
+ * 负责：压缩非必要视觉容器、强化监测指标和表格扫描效率。
+ * Modified by DingJiaye: 2026-08-28.
+ * -------------------------------------------------------------------------- */
+.app-agent-shell .ir-main {
+  padding: 24px 30px 28px;
+  background:
+    linear-gradient(rgba(177, 201, 222, .10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(177, 201, 222, .10) 1px, transparent 1px),
+    #edf4f9;
+  background-size: 34px 34px;
+}
+
+.app-agent-shell .ir-content {
+  gap: 16px;
+}
+
+.app-agent-shell .ir-content:has(.ir-page-header-compact) {
+  height: 100%;
+  padding-bottom: 0;
+}
+
+.app-agent-shell .ir-content:has(.ir-table-toolbar) {
+  height: 100%;
+  padding-bottom: 0;
+}
+
+.app-agent-shell .ir-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 38px;
+  gap: 12px;
+}
+
+.app-agent-shell .ir-table-toolbar #ir-action-msg {
+  margin: 0;
+  color: #7b8da0;
+  font-size: .77rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-agent-shell .ir-import-button {
+  min-height: 36px;
+  padding: .45rem .84rem;
+  border: 1px solid #2e5e8d;
+  border-radius: 8px;
+  background: #315f8f;
+  color: #fff;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(42, 82, 120, .16);
+  transition: background .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+.app-agent-shell .ir-import-button:hover { background: #244f7a; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(42,82,120,.2); }
+.app-agent-shell .ir-import-button:disabled { cursor: wait; opacity: .68; transform: none; }
+
+.app-agent-shell .ir-page-header {
+  min-height: 92px;
+  padding: 23px 28px;
+  border-color: #cedfeb;
+  border-radius: 18px;
+  background: linear-gradient(110deg, #ffffff 0%, #f4faff 64%, #eaf5fe 100%);
+  box-shadow: 0 14px 32px rgba(47, 79, 112, .08);
+}
+
+.app-agent-shell .ir-page-header-compact {
+  min-height: auto;
+  padding: 17px 24px;
+  margin-bottom: 0;
+}
+
+.app-agent-shell .ir-page-header h1 {
+  margin: 0;
+  color: #223d5a;
+  font-size: 1.52rem;
+  letter-spacing: -.03em;
+}
+
+.app-agent-shell .ir-page-header-compact h1 { font-size: 1.35rem; }
+
+.app-agent-shell .ir-page-desc {
+  max-width: 760px;
+  margin: .48rem 0 0;
+  color: #6f8298;
+  font-size: .87rem;
+}
+
+.app-agent-shell .ir-page-header-compact .ir-page-desc { margin-top: .3rem; font-size: .8rem; }
+
+.app-agent-shell .ir-header-status {
+  padding: .52rem .76rem;
+  border: 1px solid #d7e4ee;
+  color: #477495;
+  font-weight: 650;
+  letter-spacing: .02em;
+}
+
+.app-agent-shell .ir-overview {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid #d8e4ee;
+  border-radius: 13px;
+  background: rgba(255,255,255,.90);
+  box-shadow: 0 7px 18px rgba(46, 75, 106, .045);
+}
+
+.app-agent-shell .ir-overview article {
+  position: relative;
+  min-height: 80px;
+  padding: 15px 22px;
+  border: 0;
+  border-right: 1px solid #e1eaf1;
+  border-radius: 0;
+  background: transparent;
+}
+
+.app-agent-shell .ir-overview article:last-child { border-right: 0; }
+.app-agent-shell .ir-overview article::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: #78a4c8;
+}
+.app-agent-shell .ir-overview article:nth-child(2)::before { background: #6b98c2; }
+.app-agent-shell .ir-overview article:nth-child(3)::before { background: #d4a23e; }
+.app-agent-shell .ir-overview article:nth-child(4)::before { background: #cd745d; }
+.app-agent-shell .ir-overview span { color: #72869a; font-weight: 650; letter-spacing: .02em; }
+.app-agent-shell .ir-overview strong { color: #223d5a; font-size: 1.8rem; font-variant-numeric: tabular-nums; }
+
+.app-agent-shell .ir-filter-bar {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0;
+  padding: 5px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.82);
+  box-shadow: none;
+}
+.app-agent-shell .ir-filter { padding: .43rem .86rem; font-size: .82rem; }
+
+.app-agent-shell .ir-table-wrap {
+  flex: 1;
+  min-height: 0;
+  border-color: #d5e2ed;
+  border-radius: 14px;
+  box-shadow: 0 12px 26px rgba(44, 75, 106, .07);
+}
+.app-agent-shell .ir-table thead th {
+  padding: .83rem 1rem;
+  background: #edf5fa;
+  color: #466986;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.app-agent-shell .ir-table tbody td { padding: .72rem 1rem; border-bottom-color: #e7eef4; }
+.app-agent-shell .ir-row:nth-child(even) { background: rgba(246, 250, 253, .76); }
+.app-agent-shell .ir-row:hover { background: #edf6fc; }
+.app-agent-shell .ir-table .col-issuer { min-width: 260px; }
+.app-agent-shell .ir-table .col-rss { min-width: 132px; max-width: 145px; }
+.app-agent-shell .ir-rating-pack { gap: .28rem; }
+.app-agent-shell .ir-rating-pill { border-radius: 5px; font-size: .75rem; }
+.app-agent-shell .ir-signal { font-size: .78rem; }
+.app-agent-shell .ir-signal.muted { color: #8b98a6; }
+.app-agent-shell .ir-signal.alert { color: #b15e3e; font-weight: 700; }
+.app-agent-shell .ir-source-label {
+  display: inline-flex;
+  align-items: center;
+  max-width: 120px;
+  overflow: hidden;
+  color: #547595;
+  font-size: .76rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-agent-shell .ir-sidebar .daily-sidebar-footer {
+  padding: 14px 18px 18px;
+  border-top: 1px solid #e2ebf1;
+  background: rgba(255,255,255,.94);
+}
+.app-agent-shell .ir-sidebar .daily-sidebar-actions { gap: 9px; }
+.app-agent-shell .ir-sidebar .sidebar-action-primary,
+.app-agent-shell .ir-sidebar .sidebar-action-secondary { min-height: 40px; border-radius: 9px; }
+
+@media (max-width: 900px) {
+  .app-agent-shell .ir-main { padding: 16px; }
+  .app-agent-shell .ir-page-header { min-height: auto; padding: 18px; }
+  .app-agent-shell .ir-table-toolbar { align-items: flex-end; flex-direction: column-reverse; gap: 6px; }
+  .app-agent-shell .ir-overview article:nth-child(2) { border-right: 0; }
+  .app-agent-shell .ir-overview article:nth-child(-n+2) { border-bottom: 1px solid #e1eaf1; }
+}
