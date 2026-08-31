@@ -188,6 +188,58 @@
   line-height: 1.45;
 }
 
+/* 本轮 Command Center 主体评估深色层已回滚，保留代码仅作后续评估，不参与渲染。
+ * Modified by DingJiaye: 2026-08-31. */
+@media not all {
+/* Command Center：主体评估以对象、证据、研判三层展示，减少后台式白卡。
+   Modified by DingJiaye: 2026-08-31. */
+.app-agent-shell .entity-header {
+  border-color: rgba(126, 196, 233, .3);
+  background: linear-gradient(132deg, rgba(11, 40, 64, .9), rgba(6, 29, 49, .82));
+  box-shadow: 0 18px 42px rgba(0, 4, 15, .22), inset 0 1px 0 rgba(220, 245, 255, .06);
+}
+.app-agent-shell .entity-header::after { background: radial-gradient(circle, rgba(75, 183, 239, .17), transparent 67%); }
+.app-agent-shell .entity-agent-eyebrow,
+.app-agent-shell .entity-agent-live > span { color: #8ec9e9; }
+.app-agent-shell .entity-title { color: #f2f9ff; }
+.app-agent-shell .industry-tag,
+.app-agent-shell .entity-header-tags > span:not(.credit-status-badge) {
+  border-color: rgba(124, 195, 233, .3);
+  color: #bfe5f8;
+  background: rgba(33, 93, 126, .28);
+}
+.app-agent-shell .entity-agent-live { border-left-color: rgba(129, 194, 226, .25); }
+.app-agent-shell .entity-agent-live > strong { color: #d6eaf7; }
+.app-agent-shell .entity-agent-workflow { border-top-color: rgba(129, 194, 226, .19); }
+.app-agent-shell .entity-agent-workflow span { color: #7896ac; }
+.app-agent-shell .entity-agent-workflow .is-done { color: #b9ddef; }
+.app-agent-shell .entity-agent-workflow .is-done b { color: #74d5ac; }
+.app-agent-shell .entity-agent-workflow .is-active { color: #89d4f8; }
+.app-agent-shell .entity-agent-workflow .is-active b { color: #69c9f6; }
+.app-agent-shell .entity-latest-panel,
+.app-agent-shell .entity-events-section,
+.app-agent-shell .entity-financial-section,
+.app-agent-shell .entity-risk-card,
+.app-agent-shell .entity-financial-card,
+.app-agent-shell .fin-chart-card {
+  border-color: rgba(121, 187, 224, .22);
+  background: linear-gradient(135deg, rgba(10, 37, 59, .83), rgba(6, 27, 46, .74));
+  box-shadow: inset 0 1px 0 rgba(219, 245, 255, .035), 0 12px 28px rgba(0, 3, 13, .13);
+}
+.app-agent-shell .entity-risk-card:hover { border-color: rgba(122, 206, 249, .56); }
+.app-agent-shell .entity-assessment-view h1,
+.app-agent-shell .entity-assessment-view h2,
+.app-agent-shell .entity-assessment-view h3 { color: #edf7ff; }
+.app-agent-shell .entity-assessment-view p,
+.app-agent-shell .entity-assessment-view td,
+.app-agent-shell .entity-assessment-view th,
+.app-agent-shell .entity-assessment-view li { color: #aec6d7; }
+.app-agent-shell .entity-assessment-view a { color: #91d7ff; }
+.app-agent-shell .fin-disclosure-note,
+.app-agent-shell .fin-comparison-summary { border-color: rgba(121, 186, 222, .24); color: #b1c7d7; background: rgba(6, 30, 49, .62); }
+.app-agent-shell .fin-comparison-summary strong { color: #d5ebf9; }
+}
+
 .fin-comparison-row b { font-weight: 650; }
 .fin-comparison-row a { color: #587da5; text-decoration: none; }
 .fin-comparison-row a:hover { text-decoration: underline; }

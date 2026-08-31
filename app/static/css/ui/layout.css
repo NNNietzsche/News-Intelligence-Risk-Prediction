@@ -223,3 +223,226 @@ body.app-agent-shell::before {
   .alert-settings-surface { padding: 19px; }.alert-policy-card { grid-template-columns: 1fr; }.alert-policy-card .alert-save-btn { grid-column: 1; justify-self: start; }.alert-daily-brief-card { align-items: flex-start; flex-direction: column; }.alert-rule-options { grid-template-columns: 1fr; }.alert-entity-checklist { grid-template-columns: 1fr; }.alert-entity-choice:nth-child(odd) { border-right: 0; }.alert-field-grid { grid-template-columns: 1fr; }.alert-field.wide { grid-column: auto; }
   .manual-news-surface { padding: 19px; }.manual-news-footer { justify-content: stretch; }.manual-news-footer .alert-save-btn { flex: 1; }.daily-agent-telemetry { gap: 10px 15px; }.news-selection-toolbar { align-items: flex-start; flex-direction: column; }.agent-overview-panel { padding: 16px; }.agent-overview-head, .agent-overview-status { align-items: flex-start; flex-direction: column; }.agent-overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }.agent-overview-status { display: flex; }.agent-overview-status ul { display: grid; gap: 6px; }.daily-agent-hero .agent-overview-inline { margin-right: -1rem; margin-bottom: -1rem; margin-left: -1rem; padding: 14px 1rem 16px; }
 }
+/* --------------------------------------------------------------------------
+ * Command Center dark cockpit theme
+ * 负责：将既有页面统一为情报驾驶舱外观；不修改数据逻辑和风险口径。
+ * Modified by DingJiaye: 2026-08-31.
+ * -------------------------------------------------------------------------- */
+@media not all {
+
+body.app-agent-shell {
+  --bg-page: #061525;
+  --bg-panel: rgba(10, 31, 50, .78);
+  --bg-card: rgba(13, 39, 61, .74);
+  --text-primary: #edf6ff;
+  --text-muted: #91a8bd;
+  --accent: #62baf2;
+  --accent-hover: #a3ddff;
+  --border: rgba(123, 183, 222, .24);
+  min-height: 100vh;
+  color: var(--text-primary);
+  background:
+    radial-gradient(900px 560px at 92% -18%, rgba(56, 137, 211, .25), transparent 70%),
+    radial-gradient(760px 540px at 8% 108%, rgba(75, 92, 207, .17), transparent 70%),
+    linear-gradient(135deg, #061322 0%, #081c2f 48%, #071724 100%);
+}
+
+body.app-agent-shell::before {
+  inset: 72px 0 0;
+  z-index: -2;
+  opacity: .48;
+  background-image:
+    linear-gradient(rgba(120, 190, 239, .075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 190, 239, .075) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.82), transparent 92%);
+}
+
+body.app-agent-shell::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 72px 0 0;
+  pointer-events: none;
+  opacity: .62;
+  background:
+    radial-gradient(ellipse 38% 10% at 16% 100%, rgba(73, 119, 244, .16), transparent 70%),
+    radial-gradient(ellipse 32% 9% at 76% 100%, rgba(38, 188, 224, .13), transparent 70%);
+  filter: blur(14px);
+  animation: cockpit-ambient-drift 16s ease-in-out infinite alternate;
+}
+
+.app-agent-shell .top-bar {
+  position: relative;
+  z-index: 100;
+  border-bottom: 1px solid rgba(114, 184, 231, .26);
+  background: linear-gradient(102deg, rgba(5, 21, 37, .98), rgba(8, 38, 63, .98) 58%, rgba(10, 54, 78, .96));
+  box-shadow: 0 10px 34px rgba(0, 6, 16, .35);
+}
+
+.app-agent-shell .top-bar::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(117, 204, 255, .8), transparent);
+  opacity: .75;
+}
+
+.app-agent-shell .main-nav .nav-link {
+  position: relative;
+  color: #a9bfd1;
+  transition: color 220ms cubic-bezier(.22,1,.36,1), transform 220ms cubic-bezier(.22,1,.36,1);
+}
+.app-agent-shell .main-nav .nav-link:hover { color: #f2f9ff; transform: translateY(-1px); }
+.app-agent-shell .main-nav .nav-link.active { color: #fff; }
+.app-agent-shell .main-nav .nav-link.active::after {
+  content: "";
+  position: absolute;
+  right: 16%;
+  bottom: -13px;
+  left: 16%;
+  height: 2px;
+  background: linear-gradient(90deg, #62baf2, #b6edff);
+  box-shadow: 0 0 12px rgba(91, 194, 250, .8);
+}
+
+.app-agent-shell .agent-command-trigger,
+.app-agent-shell .agent-settings-trigger {
+  border-color: rgba(139, 207, 243, .34);
+  background: rgba(2, 20, 36, .4);
+  box-shadow: inset 0 1px 0 rgba(229, 248, 255, .08), 0 6px 18px rgba(0, 6, 18, .18);
+}
+.app-agent-shell .agent-command-trigger:hover,
+.app-agent-shell .agent-settings-trigger:hover {
+  border-color: rgba(155, 222, 255, .78);
+  background: rgba(46, 115, 157, .3);
+  box-shadow: 0 0 0 3px rgba(94, 187, 242, .09), 0 10px 23px rgba(0, 8, 20, .22);
+}
+
+.app-agent-shell .app-shell { background: transparent; }
+.app-agent-shell .page-rail {
+  border-right-color: rgba(125, 183, 220, .19) !important;
+  color: #c7d8e6;
+  background: linear-gradient(180deg, rgba(6, 24, 41, .93), rgba(7, 28, 46, .86)) !important;
+  box-shadow: 12px 0 28px rgba(0, 4, 15, .15);
+}
+.app-agent-shell .page-rail::before {
+  height: 1px;
+  background: linear-gradient(90deg, #56aee6, #876cdf 58%, #56c7dc);
+  box-shadow: 0 0 13px rgba(87, 183, 238, .48);
+}
+.app-agent-shell .daily-search {
+  border-color: rgba(137, 194, 228, .22);
+  background: rgba(20, 50, 73, .58);
+}
+.app-agent-shell .daily-search:focus-within {
+  border-color: rgba(124, 205, 247, .8);
+  background: rgba(11, 37, 59, .86);
+  box-shadow: 0 0 0 3px rgba(89, 187, 243, .1), 0 0 22px rgba(55, 153, 222, .1);
+}
+.app-agent-shell .daily-search input,
+.app-agent-shell .daily-search button,
+.app-agent-shell .page-rail input { color: #e4f2fd; }
+.app-agent-shell .daily-index-title { color: #84bddd; }
+.app-agent-shell .mod-name,
+.app-agent-shell .entity-link { color: #a8c0d1; }
+.app-agent-shell .mod-name:hover,
+.app-agent-shell .entity-link:hover { color: #f2f8ff; background: rgba(74, 145, 191, .18); }
+.app-agent-shell .mod-name.active,
+.app-agent-shell .entity-link.active { color: #f3f9ff; background: linear-gradient(90deg, rgba(58, 133, 179, .32), rgba(45, 95, 141, .08)); box-shadow: inset 2px 0 0 #6cc5f4; }
+.app-agent-shell .daily-sidebar-footer { border-top-color: rgba(125, 183, 220, .18); background: linear-gradient(180deg, transparent, rgba(4, 18, 31, .68) 32%); }
+
+.app-agent-shell .content-shell,
+.app-agent-shell .ir-main { color: #dceaf6; }
+.app-agent-shell .content { max-width: 1560px; }
+
+.app-agent-shell .sidebar-action-primary,
+.app-agent-shell .btn.primary,
+.app-agent-shell button[type="submit"] {
+  border-color: rgba(123, 204, 248, .45);
+  background: linear-gradient(135deg, #2675aa, #164a74);
+  box-shadow: 0 8px 21px rgba(0, 9, 21, .28), inset 0 1px 0 rgba(225, 247, 255, .14);
+}
+.app-agent-shell .sidebar-action-secondary {
+  border-color: rgba(124, 194, 233, .32);
+  color: #bfe4f8;
+  background: rgba(18, 53, 78, .55);
+}
+.app-agent-shell .sidebar-action-secondary:hover { color: #fff; border-color: rgba(139, 211, 248, .7); background: rgba(35, 86, 119, .7); }
+
+.app-agent-shell input,
+.app-agent-shell select,
+.app-agent-shell textarea {
+  border-color: rgba(128, 190, 225, .29);
+  color: #eaf6ff;
+  background: rgba(4, 26, 44, .62);
+}
+.app-agent-shell input::placeholder,
+.app-agent-shell textarea::placeholder { color: #7290a9; }
+.app-agent-shell input:focus,
+.app-agent-shell select:focus,
+.app-agent-shell textarea:focus {
+  border-color: #79cef7;
+  background: rgba(5, 31, 52, .9);
+  box-shadow: 0 0 0 3px rgba(91, 190, 243, .12), 0 0 24px rgba(38, 145, 213, .12);
+}
+
+.app-agent-shell .agent-command-dialog { box-shadow: 0 30px 100px rgba(0, 0, 0, .55); }
+.app-agent-shell .agent-command-surface {
+  border-color: rgba(118, 202, 245, .5);
+  background: linear-gradient(145deg, rgba(12, 44, 69, .98), rgba(3, 23, 41, .98));
+  box-shadow: inset 0 1px 0 rgba(209, 242, 255, .08), 0 0 48px rgba(50, 140, 211, .14);
+}
+.app-agent-shell .agent-proactive-panel {
+  border-color: rgba(119, 195, 234, .4);
+  border-left-color: #6fc9f4;
+  color: #c9dce9;
+  background: rgba(6, 31, 52, .93);
+  box-shadow: 0 18px 45px rgba(0, 3, 12, .34), inset 0 1px 0 rgba(211, 241, 255, .07);
+  backdrop-filter: blur(16px);
+}
+.app-agent-shell .agent-proactive-panel header,
+.app-agent-shell .agent-proactive-panel > strong { color: #eef8ff; }
+.app-agent-shell .agent-proactive-panel header b { background: #60c5f1; box-shadow: 0 0 0 4px rgba(96,197,241,.12); }
+.app-agent-shell .agent-proactive-panel ul { color: #a9c2d3; }
+.app-agent-shell .agent-proactive-panel li::before { color: #76cef5; }
+.app-agent-shell .agent-proactive-panel a { color: #94d8ff; }
+
+@keyframes cockpit-ambient-drift {
+  from { transform: translate3d(-1.5%, 0, 0) scale(1); opacity: .42; }
+  to { transform: translate3d(2%, -1%, 0) scale(1.05); opacity: .68; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-agent-shell .brand-bank-logo,
+  .app-agent-shell .daily-agent-mark {
+    transform: perspective(480px) rotateY(-4deg);
+    transform-origin: left center;
+    transition: transform 320ms cubic-bezier(.22,1,.36,1), filter 320ms cubic-bezier(.22,1,.36,1);
+  }
+  .app-agent-shell .brand-bank-logo:hover,
+  .app-agent-shell .daily-agent-mark:hover { transform: perspective(480px) rotateY(0deg) translateY(-1px); filter: brightness(1.08); }
+  .app-agent-shell .agent-overview-panel,
+  .app-agent-shell .daily-agent-hero,
+  .app-agent-shell .entity-header,
+  .app-agent-shell .ir-page-header {
+    animation: cockpit-panel-breathe 3.5s ease-in-out infinite;
+  }
+}
+
+@keyframes cockpit-panel-breathe {
+  0%, 100% { box-shadow: 0 12px 32px rgba(0, 7, 20, .17), 0 0 0 rgba(78, 180, 241, 0); }
+  50% { box-shadow: 0 14px 36px rgba(0, 7, 20, .24), 0 0 26px rgba(64, 166, 232, .09); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.app-agent-shell::after,
+  .app-agent-shell .agent-overview-panel,
+  .app-agent-shell .daily-agent-hero,
+  .app-agent-shell .entity-header,
+  .app-agent-shell .ir-page-header { animation: none !important; }
+}
+}

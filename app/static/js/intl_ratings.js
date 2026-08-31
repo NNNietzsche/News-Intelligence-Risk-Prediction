@@ -112,11 +112,11 @@
   }
 
   function ratingPackHtml(r) {
-    var values = [["穆", r.moodys], ["标", r.sp], ["惠", r.fitch]];
+    var values = [["穆", r.moodys, "moodys"], ["标", r.sp, "sp"], ["惠", r.fitch, "fitch"]];
     return '<td class="ir-cell col-rating-pack"><div class="ir-rating-pack">' + values.map(function (pair) {
       var rating = text(pair[1]) || "NR";
       var isNr = rating.toUpperCase() === "NR" || rating === "—";
-      return '<span class="ir-rating-pill' + (isNr ? ' is-nr' : '') + '"><b>' + pair[0] + '</b>' + escapeHtml(rating) + '</span>';
+      return '<span class="ir-rating-pill agency-' + pair[2] + (isNr ? ' is-nr' : '') + '"><b>' + pair[0] + '</b><em>' + escapeHtml(rating) + '</em></span>';
     }).join("") + "</div></td>";
   }
 

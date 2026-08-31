@@ -276,7 +276,38 @@
 .app-agent-shell .ir-table .col-issuer { min-width: 260px; }
 .app-agent-shell .ir-table .col-rss { min-width: 132px; max-width: 145px; }
 .app-agent-shell .ir-rating-pack { gap: .28rem; }
-.app-agent-shell .ir-rating-pill { border-radius: 5px; font-size: .75rem; }
+.app-agent-shell .ir-rating-pill {
+  min-width: 52px;
+  border-radius: 5px;
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+}
+.app-agent-shell .ir-rating-pill b {
+  margin: 0;
+  min-width: 23px;
+  padding: .19rem .28rem;
+  text-align: center;
+  font-weight: 800;
+}
+.app-agent-shell .ir-rating-pill em {
+  display: inline-block;
+  min-width: 25px;
+  padding: .16rem .31rem;
+  color: inherit;
+  font-style: normal;
+  font-weight: 800;
+  text-align: center;
+}
+/* 三大评级机构固定的中性色：仅识别机构来源，不承载风险预警含义。
+   Modified by DingJiaye: 2026-08-28. */
+.app-agent-shell .ir-rating-pill.agency-moodys { border-color: #a8d2d0; background: #f2fbfa; color: #26726f; }
+.app-agent-shell .ir-rating-pill.agency-moodys b { background: #d9f0ee; color: #226662; }
+.app-agent-shell .ir-rating-pill.agency-sp { border-color: #a9c9e7; background: #f3f9ff; color: #276498; }
+.app-agent-shell .ir-rating-pill.agency-sp b { background: #dceeff; color: #245d8e; }
+.app-agent-shell .ir-rating-pill.agency-fitch { border-color: #c7bfdf; background: #f8f7fd; color: #66568f; }
+.app-agent-shell .ir-rating-pill.agency-fitch b { background: #e9e5f5; color: #5d4d87; }
+.app-agent-shell .ir-rating-pill.is-nr { border-color: #e0e6eb; background: #f7f9fb; color: #909ba6; }
+.app-agent-shell .ir-rating-pill.is-nr b { background: #edf1f4; color: #8b96a1; }
 .app-agent-shell .ir-signal { font-size: .78rem; }
 .app-agent-shell .ir-signal.muted { color: #8b98a6; }
 .app-agent-shell .ir-signal.alert { color: #b15e3e; font-weight: 700; }

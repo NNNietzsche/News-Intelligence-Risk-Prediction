@@ -239,3 +239,66 @@ body.daily-news-ui .risk-level-tag.risk-tag-极高 { color: #a13b3b !important; 
 body.daily-news-ui .risk-level-tag.risk-tag-中::before { animation: risk-signal-pulse 1.9s ease-in-out infinite; }
 body.daily-news-ui .risk-level-tag.risk-tag-高::before,
 body.daily-news-ui .risk-level-tag.risk-tag-极高::before { animation: risk-signal-pulse 1.25s ease-in-out infinite; }
+
+/* 本轮 Command Center 日报深色层已回滚，保留代码仅作后续评估，不参与渲染。
+ * Modified by DingJiaye: 2026-08-31. */
+@media not all {
+/* Command Center：日报内容层深色化，保留三板块原有色彩语义。
+   Modified by DingJiaye: 2026-08-31. */
+body.daily-news-ui .daily-agent-canvas {
+  background:
+    radial-gradient(900px 500px at 88% 0%, rgba(42, 135, 197, .16), transparent 68%),
+    transparent;
+}
+body.daily-news-ui .daily-agent-hero,
+body.daily-news-ui .daily-summary-report {
+  border-color: rgba(122, 191, 229, .3);
+  background: linear-gradient(135deg, rgba(11, 38, 61, .9), rgba(7, 29, 49, .84));
+  box-shadow: 0 16px 38px rgba(0, 4, 15, .2), inset 0 1px 0 rgba(220, 245, 255, .05);
+}
+body.daily-news-ui .daily-agent-hero::after { background: radial-gradient(circle, rgba(64, 182, 239, .17), transparent 68%); }
+body.daily-news-ui .daily-agent-eyebrow,
+body.daily-news-ui .daily-summary-eyebrow { color: #8fc8e9; }
+body.daily-news-ui .daily-agent-identity h1,
+body.daily-news-ui .daily-summary-head h2,
+body.daily-news-ui .daily-agent-canvas .daily-summary-head h2 { color: #f0f8ff; }
+body.daily-news-ui .daily-agent-identity p,
+body.daily-news-ui .daily-summary-overview { color: #a9c2d3; }
+body.daily-news-ui .daily-agent-track { border-top-color: rgba(132, 190, 224, .19); background: rgba(2, 19, 34, .2); }
+body.daily-news-ui .daily-agent-track span { color: #718da6; }
+body.daily-news-ui .daily-agent-track .is-done,
+body.daily-news-ui .daily-agent-track .is-active { color: #b7dff5; }
+body.daily-news-ui .daily-agent-state { border-color: rgba(96, 205, 171, .36); color: #8ee2bd; background: rgba(21, 92, 76, .22); }
+body.daily-news-ui .daily-agent-quiet { border-color: rgba(127, 196, 232, .32); color: #b9e2f7; background: rgba(9, 39, 63, .58); }
+body.daily-news-ui .daily-agent-primary { border-color: rgba(111, 205, 249, .55); background: linear-gradient(135deg, #287cad, #19527b); }
+body.daily-news-ui .daily-agent-quiet:hover { background: rgba(42, 97, 129, .5); }
+body.daily-news-ui .daily-summary-section {
+  border-color: rgba(123, 187, 224, .22);
+  background: rgba(4, 25, 43, .48);
+  box-shadow: none;
+}
+body.daily-news-ui .daily-summary-section h3 { color: #dcefff; }
+body.daily-news-ui .daily-summary-section > p,
+body.daily-news-ui .daily-summary-points ul { color: #a5bed0; }
+body.daily-news-ui .daily-summary-points { border-top-color: rgba(129, 185, 219, .17); }
+body.daily-news-ui .daily-summary-points > span { color: #7ea0b8; }
+body.daily-news-ui .module-header,
+body.daily-news-ui .module-header h2,
+body.daily-news-ui .daily-agent-canvas .module-header { color: #e9f6ff; }
+body.daily-news-ui .daily-agent-canvas .entry-card.risk-event-card {
+  border-color: rgba(121, 184, 220, .22);
+  background: linear-gradient(135deg, rgba(11, 39, 62, .84), rgba(6, 28, 47, .74));
+  box-shadow: inset 0 1px 0 rgba(220, 245, 255, .035), 0 10px 25px rgba(0, 3, 13, .14);
+}
+body.daily-news-ui .daily-agent-canvas .entry-card.risk-event-card:hover {
+  border-color: rgba(119, 205, 250, .58);
+  box-shadow: inset 0 1px 0 rgba(220, 245, 255, .09), 0 18px 36px rgba(0, 3, 13, .27);
+}
+body.daily-news-ui .daily-agent-canvas .risk-event-title { color: #edf7ff; }
+body.daily-news-ui .entry-card,
+body.daily-news-ui .entry-card p,
+body.daily-news-ui .entry-card div { color: #b6ccdb; }
+body.daily-news-ui .entry-card a { color: #8ed6ff; }
+body.daily-news-ui .daily-agent-side-status,
+body.daily-news-ui .module-filter-empty { border-color: rgba(123, 185, 223, .27); color: #a9c5d7; background: rgba(7, 34, 55, .6); }
+}
