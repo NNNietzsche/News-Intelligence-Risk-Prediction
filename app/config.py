@@ -38,9 +38,9 @@ class Settings(BaseSettings):
 
     # Existing deployments keep the original report path until explicitly switched.
     industry_report_generation_mode: Literal["legacy", "grounded"] = "legacy"
-    # Modified by DingJiaye: 2026-08-26 — 现场演示时航空、能源/电力使用固定的
-    # 已核验样稿；设为 false 后将完全恢复常规 AI 生成流程。
-    industry_demo_fixed_reports: bool = True
+    # Modified by DingJiaye: 2026-08-31 — 取消固定演示稿；行业报告统一基于用户勾选
+    # 的材料和常规 AI 分析流程生成。
+    industry_demo_fixed_reports: bool = False
     grounded_report_require_approval: bool = True
     # Automatic grounded -> legacy fallback is intentionally unsupported.
     grounded_report_allow_legacy_fallback: Literal[False] = False

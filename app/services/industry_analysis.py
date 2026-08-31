@@ -52,14 +52,29 @@ class IndustryGenerationError(RuntimeError):
         self.code = code
         self.next_step = next_step
 
+# 制作与维护：DingJiaye
+# 最近修改：2026-08-31 — 统一行业报告的章节结构、证据边界和授信风险传导逻辑。
 GENERIC_TEMPLATE = """
-通用行业分析框架：
-1. 行业概况与产业链
-2. 市场规模与竞争格局
-3. 主要企业财务与信用状况
-4. 政策监管与合规环境
-5. 关键风险因素
-6. 结论与授信建议
+【写作定位】
+本报告供银行授信审查、贷后监测及风险复核使用。参照 IATA 航空行业与 Deloitte 能源行业年度展望的写法：
+以资料中可核验事实为基础，先呈现行业变化，再说明对授信客户经营、现金流和偿债能力的传导，最后给出可执行的关注重点。
+
+【推荐章节】
+（三）授信客户行业方面的变动情况及原因
+1、行业的发展现状及前景概述
+（1）概述：交代资料覆盖期间、行业所处周期、宏观环境、供需与盈利的总体变化；不要脱离资料泛谈。
+（2）核心市场与需求：按行业实际选择客运/货运、价格、产能、销量、客户、区域、订单或项目进度等维度；有同比、环比、预测或基准期时应清楚区分。
+（3）经营与盈利：围绕收入、成本、毛利/利润、资本开支、自由现金流、杠杆或回报展开；每一个数字必须保留资料中的单位、币种、期间和预测属性。
+（4）供应链、政策与技术：说明关键原材料、设备交付、监管、补贴、可持续发展或数字化因素如何影响成本、产能、项目进度或合规负担。
+（5）行业前景及风险判断：按“已披露变化 → 影响渠道 → 对借款人可能影响 → 需持续核验事项”的逻辑逐项推导，避免仅罗列风险词。
+2、授信关注重点：给出可用于贷前/贷后管理的量化指标、预警信号、资料缺口和核验动作；避免直接给出授信审批结论。
+
+【质量标准】
+1. 正式、克制、完整的中文银行授信研究文风；正文使用连续段落，标题层级清晰。
+2. 事实、来源观点、预测与模型分析必须明确区分；“预计、计划、目标、可能”等不确定性不得写成既成事实。
+3. 只使用已提供材料中的数据和主体，不得用常识补充数字、市场份额、政策内容或公司事实。
+4. 资料存在冲突、口径差异、期间不一致或正文不足时，说明限制及待核验点，不自行择一认定。
+5. 结论应具备行业针对性：解释变化的原因、传导路径、影响对象与时间维度，避免空泛表述如“需持续关注”。
 """
 
 
@@ -357,13 +372,8 @@ class IndustryAnalysisService:
         if row.status == "completed":
             row = self.fork_report(report_id)
             report_id = row.id
-        # Modified by DingJiaye: 2026-08-26 — 演示环境中航空、能源/电力报告
-        # 不等待模型或外网，直接生成基于既定材料的稳定完整样稿。
-        if (
-            self.settings.industry_demo_fixed_reports
-            and supports_fixed_demo(row.industry_name)
-        ):
-            return self._generate_fixed_demo_report(report_id)
+        # Modified by DingJiaye: 2026-08-31 — 不再使用航空、能源/电力固定演示稿；
+        # 所有行业均基于当前资料库和用户勾选来源进入常规分析流程。
         library = self.get_or_create_source_library(row.industry_name)
         replace_report_sources_from_library(self.db, report_id, library.id)
         mode = self.settings.industry_report_generation_mode

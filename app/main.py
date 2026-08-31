@@ -821,13 +821,8 @@ def _deep_reports_shell_context(
 
     if sector_key:
         sector = require_sector_key(sector_key)
-        demo_fixed_report_available = bool(
-            settings.industry_demo_fixed_reports
-            and any(
-                token in sector.default_industry_name
-                for token in ("航空", "能源", "电力")
-            )
-        )
+        # Modified by DingJiaye: 2026-08-31 — 取消固定演示稿，界面统一要求选择可核验来源。
+        demo_fixed_report_available = False
         if db is not None:
             # 二级索引只显示当前行业的报告历史，避免跨行业报告混在一起。
             history_reports = [

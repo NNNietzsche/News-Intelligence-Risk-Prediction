@@ -200,7 +200,8 @@
         class="btn notebook-generate-btn"
         id="btn-generate-report"
         data-report-id="{{ selected_report.id }}"
-        {% if drawer_selected_count == 0 and not demo_fixed_report_available %}disabled{% endif %}
+        {# 制作与维护：DingJiaye｜仅在已选择可核验来源时允许重新生成。 #}
+        {% if drawer_selected_count == 0 %}disabled{% endif %}
       >重新生成 →</button>
     </div>
     <section class="report-revision-chat" aria-label="使用 DeepSeek 调整报告">
@@ -260,7 +261,8 @@
           class="btn notebook-generate-btn"
           id="btn-generate-report"
           data-report-id="{{ selected_report.id }}"
-          {% if drawer_selected_count == 0 and not demo_fixed_report_available %}disabled{% endif %}
+          {# 制作与维护：DingJiaye｜仅在已选择可核验来源时允许生成。 #}
+          {% if drawer_selected_count == 0 %}disabled{% endif %}
         >生成报告 →</button>
       </div>
       <p class="hint notebook-generation-message" id="generation-msg"></p>
