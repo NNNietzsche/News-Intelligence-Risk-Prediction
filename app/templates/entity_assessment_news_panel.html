@@ -14,6 +14,14 @@
       {% endif %}
     </span>
   </div>
+  {# Modified by DingJiaye: 2026-09-02 — 趋势紧贴最新消息，先看变化再读摘要。 #}
+  <section class="entity-trend-panel entity-trend-panel-primary" aria-labelledby="entity-trend-title">
+    <div class="ea-panel-head">
+      <div><span class="workbench-eyebrow">RISK CHANGE</span><h3 id="entity-trend-title">风险变化趋势</h3></div>
+      <div class="trend-range" role="group" aria-label="趋势时间范围"><button type="button" data-trend-days="7">7 天</button><button type="button" class="active" data-trend-days="30">30 天</button><button type="button" data-trend-days="90">90 天</button></div>
+    </div>
+    <div id="entity-risk-trend-chart" class="entity-workbench-chart" aria-label="主体风险趋势图"></div>
+  </section>
   {% if latest_news.status == 'ready' %}
   <article class="ea-news-digest">
     {% if latest_news.highlights %}

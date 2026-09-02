@@ -1,6 +1,7 @@
 """FastAPI 路由。"""
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from io import BytesIO
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -13,11 +14,14 @@ from app.database.models import (
     DomainBlacklist,
     DomainWhitelist,
     EntityRisk,
+    EntityFinancialRecord,
+    EntityRelationship,
     IndustryConflictDetectionRun,
     IndustryEvidenceCard,
     IndustryEvidenceExtractionRun,
     IndustryReport,
     NewsArticle,
+    RiskReviewTask,
     SearchLog,
     TargetEntity,
 )
@@ -64,6 +68,9 @@ from app.schemas import (
     IntlRatingsSnapshotOut,
     ManualEntryIn,
     ManualEntityRiskIn,
+    EntityRelationshipIn,
+    RiskReviewTaskIn,
+    RiskReviewTaskUpdateIn,
     NewsArticleOut,
     PipelineJobStatusOut,
     PipelineRunRequest,
@@ -128,6 +135,7 @@ from app.services.domain_rules import seed_default_domains
 from app.services.entity_briefing import news_lookback_start
 from app.services.entity_catalog import configured_entity_catalog
 from app.services.entity_relevance import is_monitored_public_event
+from app.services.news_risk_tags import normalize_display_risk_level
 from app.services.industry_analysis import IndustryAnalysisService, IndustryGenerationError
 from app.services.pipeline_runner import (
     get_current_job,
@@ -523,6 +531,366 @@ def manual_entries(body: ManualEntryIn, db: Session = Depends(get_db)):
 
 
 _SIGNAL_TO_RISK_LEVEL = {"低": "低", "关注": "中", "风险": "高"}
+
+
+def _task_to_dict(task: RiskReviewTask) -> dict:
+    return {
+        "id": task.id,
+        "entity_id": task.entity_id,
+        "entity_risk_id": task.entity_risk_id,
+        "title": task.title,
+        "severity": task.severity,
+        "status": task.status,
+        "assignee": task.assignee,
+        "due_at": task.due_at.isoformat() if task.due_at else None,
+        "verification_result": task.verification_result,
+        "disposition": task.disposition,
+        "resolution_note": task.resolution_note,
+        "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+        "created_at": task.created_at.isoformat() if task.created_at else None,
+    }
+
+
+def _ensure_high_risk_review_tasks(db: Session, entity_id: int) -> int:
+    """把已入库的高风险主体资讯自动转成待核验任务，重复调用不会重复创建。"""
+    candidate_risks = (
+        db.query(EntityRisk)
+        .filter(
+            EntityRisk.entity_id == entity_id,
+            EntityRisk.provenance != "demo",
+        )
+        .all()
+    )
+    created = 0
+    for risk in candidate_risks:
+        display_level = normalize_display_risk_level(
+            title=risk.title,
+            summary=risk.summary,
+            impact=risk.impact_analysis,
+            level=risk.risk_level,
+        )
+        if display_level not in {"高", "极高"}:
+            continue
+        exists = (
+            db.query(RiskReviewTask.id)
+            .filter(RiskReviewTask.entity_risk_id == risk.id)
+            .first()
+        )
+        if exists:
+            continue
+        db.add(
+            RiskReviewTask(
+                entity_id=entity_id,
+                entity_risk_id=risk.id,
+                title=f"核验：{risk.title}",
+                severity="风险",
+                status="待核验",
+                due_at=datetime.utcnow() + timedelta(days=1),
+                disposition="自动生成：请核验事实、主体关联度及处置建议。",
+            )
+        )
+        created += 1
+    if created:
+        db.commit()
+    return created
+
+
+# Modified by DingJiaye: 2026-09-01 — 风险处置闭环：高风险资讯自动建待核验任务，
+# 人工可继续补充负责人、期限、核验结论、处置措施及复盘留痕。
+@router.get("/entities/{entity_id}/review-tasks")
+def list_entity_review_tasks(
+    entity_id: int,
+    status: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    if not db.get(TargetEntity, entity_id):
+        raise HTTPException(status_code=404, detail="监控主体不存在")
+    _ensure_high_risk_review_tasks(db, entity_id)
+    q = (
+        db.query(RiskReviewTask)
+        .filter(RiskReviewTask.entity_id == entity_id)
+        .order_by(RiskReviewTask.status.asc(), RiskReviewTask.due_at.asc(), RiskReviewTask.id.desc())
+    )
+    if status:
+        q = q.filter(RiskReviewTask.status == status)
+    return [_task_to_dict(item) for item in q.all()]
+
+
+@router.post("/entities/{entity_id}/review-tasks")
+def create_entity_review_task(
+    entity_id: int,
+    body: RiskReviewTaskIn,
+    db: Session = Depends(get_db),
+):
+    if not db.get(TargetEntity, entity_id):
+        raise HTTPException(status_code=404, detail="监控主体不存在")
+    if body.entity_risk_id:
+        risk = db.get(EntityRisk, body.entity_risk_id)
+        if not risk or risk.entity_id != entity_id:
+            raise HTTPException(status_code=400, detail="风险事件与主体不匹配")
+    task = RiskReviewTask(
+        entity_id=entity_id,
+        entity_risk_id=body.entity_risk_id,
+        title=body.title.strip(),
+        severity=body.severity,
+        status=body.status,
+        assignee=(body.assignee or "").strip() or None,
+        due_at=body.due_at.replace(tzinfo=None) if body.due_at else None,
+        verification_result=(body.verification_result or "").strip() or None,
+        disposition=(body.disposition or "").strip() or None,
+        resolution_note=(body.resolution_note or "").strip() or None,
+    )
+    if task.status in {"已完成", "已关闭"}:
+        task.completed_at = datetime.utcnow()
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return _task_to_dict(task)
+
+
+@router.put("/review-tasks/{task_id}")
+def update_review_task(task_id: int, body: RiskReviewTaskUpdateIn, db: Session = Depends(get_db)):
+    task = db.get(RiskReviewTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="处置任务不存在")
+    for field in ("status", "assignee", "verification_result", "disposition", "resolution_note"):
+        value = getattr(body, field)
+        if value is not None:
+            setattr(task, field, value.strip() if isinstance(value, str) else value)
+    if body.due_at is not None:
+        task.due_at = body.due_at.replace(tzinfo=None)
+    if task.status in {"已完成", "已关闭"} and task.completed_at is None:
+        task.completed_at = datetime.utcnow()
+    elif task.status not in {"已完成", "已关闭"}:
+        task.completed_at = None
+    db.commit()
+    db.refresh(task)
+    return _task_to_dict(task)
+
+
+def _relationship_to_dict(row: EntityRelationship) -> dict:
+    return {
+        "id": row.id,
+        "entity_id": row.entity_id,
+        "related_name": row.related_name,
+        "related_type": row.related_type,
+        "relationship_type": row.relationship_type,
+        "ownership_pct": row.ownership_pct,
+        "country_or_region": row.country_or_region,
+        "risk_signal": row.risk_signal,
+        "notes": row.notes,
+        "source_url": row.source_url,
+        "is_active": row.is_active,
+    }
+
+
+# Modified by DingJiaye: 2026-09-02 — 首次打开时将主体配置中的已核验关联方写入图谱；
+# 后续均由用户增删维护，删除记录保留为非活动状态，避免刷新后被再次自动加入。
+def _seed_configured_relationships(entity: TargetEntity, db: Session) -> None:
+    existing = (
+        db.query(EntityRelationship.id)
+        .filter(EntityRelationship.entity_id == entity.id)
+        .first()
+    )
+    if existing:
+        return
+    profile = configured_entity_catalog().find((entity.name, entity.display_name, entity.aliases))
+    if not profile:
+        return
+    role_map = {
+        "parent": ("母公司/集团", "集团或母公司关系"),
+        "shareholder": ("股东", "公开披露的股东或财团参与方"),
+        "supplier": ("供应商", "供应链关联方"),
+        "counterparty": ("关联方", "合作、交易或融资相关方"),
+    }
+    rows = []
+    # 图谱只采用 YAML 中显式维护的 related_parties。不能调用
+    # resolved_related_parties()：该方法为新闻检索补全用途，可能包含网页标题。
+    for party in profile.related_parties:
+        related_type, relationship_type = role_map.get(party.role, ("关联方", "关联关系"))
+        note = "来自主体监测配置；请以最新官方披露或公告为准。"
+        if profile.key == "普洛斯" and party.name in {"中国投资有限责任公司", "CPP Investments"}:
+            note = "历史合作/共同投资监测对象，不据此认定为当前 GLP 股东；请以最新公告核验。"
+        rows.append(EntityRelationship(
+            entity_id=entity.id,
+            related_name=party.name,
+            related_type=related_type,
+            relationship_type=relationship_type,
+            risk_signal="中性",
+            notes=note,
+        ))
+    if rows:
+        db.add_all(rows)
+        db.commit()
+
+
+# Modified by DingJiaye: 2026-09-01 — 客户关系图谱数据由用户维护，并保留可核验来源。
+@router.get("/entities/{entity_id}/relationships")
+def list_entity_relationships(entity_id: int, db: Session = Depends(get_db)):
+    entity = db.get(TargetEntity, entity_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail="监控主体不存在")
+    _seed_configured_relationships(entity, db)
+    rows = (
+        db.query(EntityRelationship)
+        .filter(EntityRelationship.entity_id == entity_id, EntityRelationship.is_active.is_(True))
+        .order_by(EntityRelationship.related_type.asc(), EntityRelationship.related_name.asc())
+        .all()
+    )
+    return [_relationship_to_dict(row) for row in rows]
+
+
+@router.post("/entities/{entity_id}/relationships")
+def create_entity_relationship(
+    entity_id: int, body: EntityRelationshipIn, db: Session = Depends(get_db)
+):
+    if not db.get(TargetEntity, entity_id):
+        raise HTTPException(status_code=404, detail="监控主体不存在")
+    row = EntityRelationship(
+        entity_id=entity_id,
+        related_name=body.related_name.strip(),
+        related_type=body.related_type.strip(),
+        relationship_type=body.relationship_type.strip(),
+        ownership_pct=body.ownership_pct,
+        country_or_region=(body.country_or_region or "").strip() or None,
+        risk_signal=body.risk_signal,
+        notes=(body.notes or "").strip() or None,
+        source_url=(body.source_url or "").strip() or None,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return _relationship_to_dict(row)
+
+
+@router.delete("/entities/{entity_id}/relationships/{relationship_id}")
+def delete_entity_relationship(entity_id: int, relationship_id: int, db: Session = Depends(get_db)):
+    row = db.get(EntityRelationship, relationship_id)
+    if not row or row.entity_id != entity_id:
+        raise HTTPException(status_code=404, detail="关联关系不存在")
+    # 保留删除痕迹，避免配置基线在下一次刷新时再次自动写入。
+    row.is_active = False
+    db.commit()
+    return {"message": "关联关系已删除"}
+
+
+def _financial_record_to_dict(row: EntityFinancialRecord) -> dict:
+    return {
+        "id": row.id,
+        "statement_type": row.statement_type,
+        "period": row.period,
+        "metric_key": row.metric_key,
+        "metric_label": row.metric_label,
+        "value": row.value,
+        "unit": row.unit,
+        "published_at": row.published_at.isoformat() if row.published_at else None,
+        "source_name": row.source_name,
+        "source_url": row.source_url,
+        "note": row.note,
+    }
+
+
+@router.get("/entities/{entity_id}/financial-records")
+def list_entity_financial_records(entity_id: int, db: Session = Depends(get_db)):
+    if not db.get(TargetEntity, entity_id):
+        raise HTTPException(status_code=404, detail="监控主体不存在")
+    rows = (
+        db.query(EntityFinancialRecord)
+        .filter(EntityFinancialRecord.entity_id == entity_id)
+        .order_by(EntityFinancialRecord.statement_type.asc(), EntityFinancialRecord.period.desc(), EntityFinancialRecord.id.desc())
+        .all()
+    )
+    return [_financial_record_to_dict(row) for row in rows]
+
+
+# Modified by DingJiaye: 2026-09-01 — 财务导入支持 Excel/CSV，导入结果优先展示在主体财务页，
+# 用户可用标准列：报表类型、报告期、指标、数值、单位、发布日期、信源名称、信源URL、备注。
+@router.post("/entities/{entity_id}/financial-records/import")
+async def import_entity_financial_records(
+    entity_id: int,
+    file: UploadFile = File(...),
+    source_name: str = Form("手工导入财务数据"),
+    db: Session = Depends(get_db),
+):
+    if not db.get(TargetEntity, entity_id):
+        raise HTTPException(status_code=404, detail="监控主体不存在")
+    filename = file.filename or ""
+    suffix = Path(filename).suffix.lower()
+    if suffix not in {".xlsx", ".xls", ".csv"}:
+        raise HTTPException(status_code=400, detail="请上传 xlsx、xls 或 csv 财务模板")
+    payload = await file.read()
+    if not payload or len(payload) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="上传文件为空或超过大小限制")
+    try:
+        import pandas as pd
+
+        frame = pd.read_csv(BytesIO(payload)) if suffix == ".csv" else pd.read_excel(BytesIO(payload))
+        frame = frame.fillna("")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"无法读取 Excel：{exc}") from exc
+    aliases = {
+        "statement_type": ("报表类型", "statement_type", "类型"),
+        "period": ("报告期", "period", "期间"),
+        "metric_label": ("指标", "指标名称", "metric_label", "metric"),
+        "metric_key": ("指标代码", "metric_key"),
+        "value": ("数值", "value", "金额"),
+        "unit": ("单位", "unit"),
+        "published_at": ("发布日期", "published_at"),
+        "source_url": ("信源URL", "来源URL", "source_url"),
+        "note": ("备注", "note"),
+    }
+    columns = {str(col).strip(): col for col in frame.columns}
+    def cell(row, key: str) -> str:
+        for candidate in aliases[key]:
+            if candidate in columns:
+                value = row.get(columns[candidate], "")
+                return str(value).strip() if value is not None else ""
+        return ""
+    if not any(candidate in columns for candidate in aliases["metric_label"]):
+        raise HTTPException(status_code=400, detail="模板缺少“指标”或“指标名称”列")
+    if not any(candidate in columns for candidate in aliases["value"]):
+        raise HTTPException(status_code=400, detail="模板缺少“数值”列")
+    rows: list[EntityFinancialRecord] = []
+    for _, source_row in frame.iterrows():
+        metric = cell(source_row, "metric_label")
+        value = cell(source_row, "value")
+        if not metric or not value:
+            continue
+        published_raw = cell(source_row, "published_at")
+        published_at = None
+        if published_raw:
+            try:
+                published_at = datetime.fromisoformat(published_raw.replace("Z", "+00:00")).replace(tzinfo=None)
+            except ValueError:
+                pass
+        rows.append(EntityFinancialRecord(
+            entity_id=entity_id,
+            statement_type=cell(source_row, "statement_type") or "context",
+            period=cell(source_row, "period") or None,
+            metric_key=cell(source_row, "metric_key") or None,
+            metric_label=metric,
+            value=value,
+            unit=cell(source_row, "unit") or None,
+            published_at=published_at,
+            source_name=source_name.strip() or "手工导入财务数据",
+            source_url=cell(source_row, "source_url") or None,
+            note=cell(source_row, "note") or None,
+        ))
+    if not rows:
+        raise HTTPException(status_code=400, detail="未读取到有效指标，请检查指标与数值列")
+    db.add_all(rows)
+    db.commit()
+    return {"imported": len(rows), "message": f"已导入 {len(rows)} 条财务指标，页面将优先展示导入数据"}
+
+
+@router.delete("/entities/{entity_id}/financial-records/{record_id}")
+def delete_entity_financial_record(entity_id: int, record_id: int, db: Session = Depends(get_db)):
+    row = db.get(EntityFinancialRecord, record_id)
+    if not row or row.entity_id != entity_id:
+        raise HTTPException(status_code=404, detail="财务指标不存在")
+    db.delete(row)
+    db.commit()
+    return {"message": "财务指标已删除"}
 
 
 # Modified by DingJiaye: 2026-08-28 — 将人工补录的主体报道进入既有信用灯号、汇总和通知流程。
@@ -1729,6 +2097,50 @@ def list_entity_risks(
     if report_date:
         q = q.filter(EntityRisk.report_date == report_date)
     return q.limit(200).all()
+
+
+# Modified by DingJiaye: 2026-09-01 — 为主体页提供近 7/30/90 天风险变化趋势，
+# 采用与页面一致的普通/关注/风险三档口径。
+@router.get("/entities/{entity_id}/risk-trends")
+def entity_risk_trends(
+    entity_id: int,
+    days: int = Query(30, ge=7, le=90),
+    db: Session = Depends(get_db),
+):
+    if not db.get(TargetEntity, entity_id):
+        raise HTTPException(status_code=404, detail="主体不存在")
+    end_day = tokyo_today()
+    start_day = end_day - timedelta(days=days - 1)
+    rows = (
+        db.query(EntityRisk)
+        .filter(
+            EntityRisk.entity_id == entity_id,
+            EntityRisk.provenance != "demo",
+            EntityRisk.report_date >= start_day,
+            EntityRisk.report_date <= end_day,
+        )
+        .all()
+    )
+    buckets = {
+        (start_day + timedelta(days=index)).isoformat(): {"normal": 0, "watch": 0, "risk": 0, "events": 0}
+        for index in range(days)
+    }
+    for row in rows:
+        key = row.report_date.isoformat()
+        if key not in buckets:
+            continue
+        level = normalize_display_risk_level(
+            title=row.title, summary=row.summary, impact=row.impact_analysis, level=row.risk_level
+        )
+        # 与主体页展示一致：风险提示明确“影响极低”时不会被历史原始标签抬高。
+        target = "risk" if level in {"高", "极高"} else "watch" if level == "中" else "normal"
+        buckets[key][target] += 1
+        buckets[key]["events"] += 1
+    return {
+        "entity_id": entity_id,
+        "days": days,
+        "points": [{"date": day, **payload} for day, payload in buckets.items()],
+    }
 
 
 @router.get("/entities/{entity_id}/source-catalog")

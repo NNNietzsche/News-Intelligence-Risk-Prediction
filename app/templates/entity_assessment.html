@@ -201,6 +201,19 @@
     {# 2. 财务信息：损益 / 负债 / 流量要点表 #}
     {% include "entity_assessment_finance_panel.html" %}
 
+    {# Modified by DingJiaye: 2026-09-02 — 仅保留紧凑的客户关系图谱；预警处置闭环不在页面展示。 #}
+    <section class="entity-risk-workbench" aria-label="客户关系图谱">
+      <section class="ea-panel entity-relation-panel">
+        <div class="ea-panel-head">
+          <div><span class="workbench-eyebrow">RELATION INTELLIGENCE</span><h2>客户关系图谱</h2></div>
+          <button type="button" class="ea-finance-import" id="relationship-open">添加关联关系</button>
+        </div>
+        <p class="workbench-note">已载入主体配置的关联方基线；可增补或删除，用于沿关联链观察风险传导。</p>
+        <div id="entity-relation-graph" class="entity-relation-graph" aria-label="企业关系图谱"></div>
+        <div id="entity-relation-list" class="entity-relation-list" aria-live="polite"></div>
+      </section>
+    </section>
+
     {# 3. 公开信息事件（原板块平移） #}
     <section class="ea-panel" aria-labelledby="risk-panel-title">
       <div class="ea-panel-head">
@@ -286,6 +299,29 @@
       {% endif %}
     </section>
 
+    <dialog class="entity-workbench-dialog" id="relationship-dialog">
+      <form method="dialog" class="entity-workbench-form" id="relationship-form">
+        <header><div><span>RELATION INTELLIGENCE</span><h2>添加关联关系</h2></div><button type="button" class="dialog-close" data-dialog-close="relationship-dialog" aria-label="关闭">×</button></header>
+        <label>关联主体<input name="related_name" required placeholder="例如：融资银行、股东或供应商名称" /></label>
+        <div class="workbench-form-grid"><label>主体类型<select name="related_type"><option>股东</option><option>关联方</option><option>供应商</option><option>融资银行</option><option>国家地区</option><option>子公司</option></select></label><label>关系说明<input name="relationship_type" required value="关联关系" /></label><label>持股比例（可选）<input name="ownership_pct" type="number" min="0" max="100" step="0.01" /></label><label>风险状态<select name="risk_signal"><option value="中性">中性</option><option value="关注">关注</option><option value="风险">风险</option></select></label></div>
+        <label>国家或地区<input name="country_or_region" placeholder="例如：中国、日本" /></label>
+        <label>核验来源 URL<input name="source_url" type="url" placeholder="https://…" /></label>
+        <label>备注<textarea name="notes" rows="3" placeholder="关系依据、风险传导路径或需持续关注的事项"></textarea></label>
+        <footer><button type="button" class="dialog-cancel" data-dialog-close="relationship-dialog">取消</button><button type="submit" class="dialog-submit">保存关系</button></footer>
+      </form>
+    </dialog>
+
+    <dialog class="entity-workbench-dialog" id="financial-import-dialog">
+      <form method="dialog" class="entity-workbench-form" id="financial-import-form">
+        <header><div><span>USER MANAGED FINANCIALS</span><h2>导入财务数据</h2></div><button type="button" class="dialog-close" data-dialog-close="financial-import-dialog" aria-label="关闭">×</button></header>
+        <p class="workbench-dialog-note">上传 xlsx、xls 或 CSV。使用列：<b>报表类型、报告期、指标、数值、单位、发布日期、信源URL、备注</b>；导入数据将优先展示。</p>
+        <label>数据来源名称<input name="source_name" value="手工导入财务数据" /></label>
+        <label class="financial-file-input">选择 Excel / CSV<input name="file" type="file" accept=".xlsx,.xls,.csv" required /></label>
+        <p id="financial-import-message" class="workbench-message" hidden></p>
+        <footer><button type="button" class="dialog-cancel" data-dialog-close="financial-import-dialog">取消</button><button type="submit" class="dialog-submit">导入并应用</button></footer>
+      </form>
+    </dialog>
+
     {% else %}
     <div class="ea-empty ea-empty-page" role="status">
       <p class="ea-empty-title">暂无监控主体</p>
@@ -318,6 +354,7 @@
 {# Modified by DingJiaye: 2026-08-26 — 更新版本号，确保浏览器加载非阻塞面板脚本。 #}
 <script src="/static/js/entity_assessment.js?v=20260826-1"></script>
 <script src="/static/js/entity_financial_charts.js?v=20260826-1"></script>
+<script src="/static/js/entity_risk_workspace.js?v=20260902-1"></script>
 <script>
   (function initRiskTabs() {
     var tabs = document.querySelectorAll(".risk-tabs:not(.fin-tabs) .risk-tab");

@@ -501,3 +501,67 @@ body.page-entity_assessment .risk-level-tag.risk-tag-极高::before { animation:
 .entity-header-signal.entity-news-signal-neutral { background: #f0f3f5; border-color: #d9e0e5; }
 .entity-header-signal.entity-news-signal-watch { background: #fff3cd; border-color: #edcf7c; }
 .entity-header-signal.entity-news-signal-risk { background: #fde8e7; border-color: #e9aaa7; }
+
+/* --------------------------------------------------------------------------
+ * 主体风险工作台：趋势、关系图谱、处置闭环与财务导入。
+ * Modified by DingJiaye: 2026-09-01.
+ * -------------------------------------------------------------------------- */
+.ea-finance-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.ea-finance-import, .entity-task-panel .ea-finance-import, .entity-relation-panel .ea-finance-import {
+  appearance: none; border: 1px solid #9ab9d5; border-radius: 7px; background: #f7fbff; color: #315e88;
+  padding: 7px 10px; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+.ea-finance-import:hover { transform: translateY(-1px); background: #eaf4fc; border-color: #5587b1; }
+.fin-imported-data { margin-top: 16px; border: 1px solid #cdddeb; background: #fbfdff; }
+.fin-imported-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding: 16px 18px; border-bottom: 1px solid #d9e6f0; }
+.fin-imported-head span, .workbench-eyebrow, .entity-workbench-form header span { display:block; color:#6688a7; font-size:10px; font-weight:800; letter-spacing:.12em; }
+.fin-imported-head h3 { margin: 4px 0 0; color: #264c70; font-size: 17px; }
+.fin-imported-head p { margin:0; color:#7a8fa2; font-size:12px; }
+.fin-imported-table .fin-number { color:#1f527e; font-weight:750; }
+.fin-record-delete { border:0; background:transparent; color:#9a5454; cursor:pointer; font:inherit; font-size:12px; }
+.entity-trend-panel-primary { margin: 24px 0 18px; padding: 17px 18px 10px; border-top: 1px solid #d9e6f0; background: linear-gradient(90deg, rgba(240,247,252,.72), rgba(255,255,255,0)); }
+.entity-trend-panel-primary .ea-panel-head { margin-bottom: 4px; }
+.entity-trend-panel-primary h3 { margin: 3px 0 0; color: #294e70; font-size: 17px; }
+.entity-trend-panel-primary .entity-workbench-chart { height: 210px; }
+.entity-risk-workbench { display:block; margin:20px 0; }
+.entity-risk-workbench .ea-panel { margin:0; }
+.entity-relation-panel { max-width: 100%; }
+.workbench-note { margin: -4px 0 14px; color:#778c9f; font-size:12px; line-height:1.6; }
+.trend-range { display:inline-flex; padding:3px; border:1px solid #d5e2ed; background:#f9fbfd; border-radius:8px; }
+.trend-range button { border:0; background:transparent; color:#7890a4; padding:5px 8px; border-radius:5px; font:inherit; font-size:11px; cursor:pointer; }
+.trend-range button.active { background:#2f6594; color:#fff; box-shadow:0 2px 5px rgba(35,74,106,.16); }
+.entity-workbench-chart { height:245px; min-height:180px; }
+.entity-workbench-chart.is-loading { opacity:.52; transition:opacity .18s ease; }
+.review-severity { display:inline-flex; align-items:center; width:max-content; border-radius:999px; padding:2px 6px; font-size:10px; font-weight:800; border:1px solid; }
+.review-severity.neutral { color:#6e7f8f; background:#f2f5f7; border-color:#dce4e9; }
+.review-severity.watch { color:#9a7318; background:#fff6da; border-color:#ecd486; }
+.review-severity.risk { color:#a34646; background:#fdefef; border-color:#edb7b7; }
+.entity-relation-graph { height:190px; border-top:1px solid #e2ebf2; border-bottom:1px solid #e2ebf2; background:radial-gradient(circle at 50% 40%,rgba(221,238,250,.52),transparent 64%); }
+.entity-relation-list { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:10px; max-height:152px; overflow:auto; padding-right:2px; }
+.relation-list-item { display:flex; justify-content:space-between; gap:8px; padding:10px; border:1px solid #e0e8ef; background:#fbfcfd; }
+.relation-list-item strong { display:block; margin-top:5px; color:#2c506f; font-size:12px; }
+.relation-list-item p { margin:4px 0 0; color:#7d90a0; font-size:11px; line-height:1.45; }
+.relation-list-item button { align-self:flex-start; border:0; color:#9a5454; background:transparent; font:inherit; font-size:11px; cursor:pointer; }
+.workbench-empty, .workbench-loading, .workbench-error { margin:14px 0; color:#8193a3; font-size:12px; }
+.workbench-error { color:#a05252; }
+.entity-workbench-dialog { width:min(640px,calc(100vw - 28px)); border:1px solid #c3d6e5; border-radius:12px; padding:0; color:#294861; background:#fbfdff; box-shadow:0 24px 70px rgba(20,48,74,.28); }
+.entity-workbench-dialog::backdrop { background:rgba(25,48,68,.42); backdrop-filter:blur(2px); }
+.entity-workbench-form { display:grid; gap:13px; padding:22px; }
+.entity-workbench-form header { display:flex; align-items:flex-start; justify-content:space-between; padding-bottom:13px; border-bottom:1px solid #dbe7f0; }
+.entity-workbench-form header h2 { margin:5px 0 0; font-size:21px; color:#1d4265; }
+.dialog-close { width:30px; height:30px; border:1px solid #c9dae8; border-radius:50%; background:#fff; color:#476c8a; cursor:pointer; font-size:23px; line-height:1; }
+.entity-workbench-form label { display:grid; gap:6px; color:#59748c; font-size:12px; font-weight:750; }
+.entity-workbench-form input, .entity-workbench-form textarea, .entity-workbench-form select { box-sizing:border-box; width:100%; border:1px solid #c9d9e7; border-radius:6px; padding:9px 10px; color:#294861; background:#fff; font:inherit; font-size:13px; }
+.entity-workbench-form textarea { resize:vertical; }
+.workbench-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }
+.entity-workbench-form footer { display:flex; justify-content:flex-end; gap:10px; padding-top:6px; }
+.dialog-cancel, .dialog-submit { border-radius:7px; padding:9px 14px; font:inherit; font-size:13px; font-weight:750; cursor:pointer; }
+.dialog-cancel { border:1px solid #b4c9da; background:#fff; color:#446a88; }
+.dialog-submit { border:1px solid #285d8a; background:#2f6594; color:#fff; }
+.financial-file-input { padding:18px; border:1px dashed #9bb8d2; background:#f4f9fd; text-align:center; cursor:pointer; }
+.financial-file-input input { border:0; padding:8px 0 0; background:transparent; }
+.workbench-dialog-note { margin:0; color:#71879a; font-size:12px; line-height:1.7; }
+.workbench-message { margin:0; color:#466f92; font-size:12px; }
+@media (max-width:900px) { .entity-relation-list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:560px) { .workbench-form-grid { grid-template-columns:1fr; } .fin-imported-head { align-items:flex-start; flex-direction:column; } .ea-finance-actions { align-items:flex-end; flex-direction:column; } }

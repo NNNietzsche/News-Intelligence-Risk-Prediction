@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/static/css/ui/tokens.css?v=20260827-1" />
   <link rel="stylesheet" href="/static/css/ui/layout.css?v=20260828-4" />
   <link rel="stylesheet" href="/static/css/ui/daily-news.css?v=20260828-6" />
-  <link rel="stylesheet" href="/static/css/ui/entity-assessment.css?v=20260828-5" />
+  <link rel="stylesheet" href="/static/css/ui/entity-assessment.css?v=20260902-1" />
   {# Modified by DingJiaye: 2026-08-27 — 行业智能体样式仅由行业页按需加载，减少其它页面首屏 CSS。 #}
   <link rel="stylesheet" href="/static/css/ui/intl-ratings.css?v=20260828-4" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
@@ -26,8 +26,8 @@
 <body class="app-agent-shell page-{{ active_page }} {% if active_page in ('daily_news', 'news_7x24') %}daily-news-ui{% endif %}">
   <header class="top-bar">
     <div class="brand">
-      {# Header logo supplied by DingJiaye. Modified: 2026-08-28. #}
-      <img class="brand-bank-logo" src="/static/img/bank-of-communications-logo.webp" alt="交通银行 Bank of Communications" />
+      {# Header logo updated by DingJiaye: 2026-09-01 — 交通银行东京支店官方标识。 #}
+      <img class="brand-bank-logo" src="/static/img/bank-of-communications-tokyo-branch-logo.jpg" alt="交通银行东京支店 Bank of Communications Tokyo Branch" />
     </div>
     <nav class="main-nav" aria-label="主导航">
       <a href="/daily-news" class="nav-link {% if active_page in ('daily_news', 'news_7x24') %}active{% endif %}">新闻汇总</a>

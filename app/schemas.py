@@ -294,6 +294,40 @@ class ManualEntityRiskIn(BaseModel):
     published_at: Optional[datetime] = None
 
 
+# Modified by DingJiaye: 2026-09-01 — 风险处置闭环的可审计输入模型。
+class RiskReviewTaskIn(BaseModel):
+    title: str = Field(..., min_length=3, max_length=512)
+    entity_risk_id: Optional[int] = Field(None, ge=1)
+    severity: Literal["普通", "关注", "风险"] = "风险"
+    status: str = Field("待核验", min_length=2, max_length=32)
+    assignee: Optional[str] = Field(None, max_length=128)
+    due_at: Optional[datetime] = None
+    verification_result: Optional[str] = None
+    disposition: Optional[str] = None
+    resolution_note: Optional[str] = None
+
+
+class RiskReviewTaskUpdateIn(BaseModel):
+    status: Optional[str] = Field(None, min_length=2, max_length=32)
+    assignee: Optional[str] = Field(None, max_length=128)
+    due_at: Optional[datetime] = None
+    verification_result: Optional[str] = None
+    disposition: Optional[str] = None
+    resolution_note: Optional[str] = None
+
+
+# Modified by DingJiaye: 2026-09-01 — 客户关系图谱人工维护输入，需保留来源链接。
+class EntityRelationshipIn(BaseModel):
+    related_name: str = Field(..., min_length=1, max_length=256)
+    related_type: str = Field("关联方", min_length=1, max_length=64)
+    relationship_type: str = Field("关联关系", min_length=1, max_length=128)
+    ownership_pct: Optional[float] = Field(None, ge=0, le=100)
+    country_or_region: Optional[str] = Field(None, max_length=128)
+    risk_signal: Literal["中性", "关注", "风险"] = "中性"
+    notes: Optional[str] = None
+    source_url: Optional[str] = Field(None, max_length=1024)
+
+
 class SendSelectedIn(BaseModel):
     ids: list[int] = Field(..., min_length=1, max_length=50)
 

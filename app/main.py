@@ -22,7 +22,7 @@ from app.config import (
     modules_for_page,
 )
 from app.database.models import (
-    EntityRisk, IndustryGroundedReportRun, NewsArticle,
+    EntityFinancialRecord, EntityRisk, IndustryGroundedReportRun, NewsArticle,
     ReportRun, SearchLog, TargetEntity,
 )
 from app.database.session import get_db, init_db
@@ -705,8 +705,36 @@ def _entity_assessment_context(
     else:
         display_risks = []
 
-    # 统一生成一次财务面板，避免页面重复读取公开披露。
+    # 统一生成一次财务面板；用户导入的 Excel 财务指标优先显示，
+    # 可替代早期配置文件中的静态演示/参考口径。Modified by DingJiaye: 2026-09-01.
     financials = build_financials_panel(profile, live=live) if selected_entity else {}
+    if selected_entity:
+        imported_financials = (
+            db.query(EntityFinancialRecord)
+            .filter(EntityFinancialRecord.entity_id == selected_entity.id)
+            .order_by(
+                EntityFinancialRecord.statement_type.asc(),
+                EntityFinancialRecord.period.desc(),
+                EntityFinancialRecord.id.desc(),
+            )
+            .all()
+        )
+        financials["imported_records"] = [
+            {
+                "id": row.id,
+                "statement_type": row.statement_type,
+                "period": row.period,
+                "metric_label": row.metric_label,
+                "value": row.value,
+                "unit": row.unit,
+                "published_at": row.published_at.isoformat() if row.published_at else None,
+                "source_name": row.source_name,
+                "source_url": row.source_url,
+                "note": row.note,
+            }
+            for row in imported_financials
+        ]
+        financials["has_imported_records"] = bool(imported_financials)
 
     credit_counts = {lv: 0 for lv in CREDIT_LEVELS}
     for ent in entities:

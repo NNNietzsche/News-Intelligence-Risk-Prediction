@@ -615,6 +615,87 @@ class EntityRisk(Base):
     entity: Mapped["TargetEntity"] = relationship(back_populates="risks")
 
 
+# Modified by DingJiaye: 2026-09-01 — 将高风险事件纳入可追踪的处置闭环，
+# 保留负责人、期限、核验结论及处置留痕，避免风险只停留在页面提示。
+class RiskReviewTask(Base):
+    """主体风险事件的核验与处置任务。"""
+
+    __tablename__ = "risk_review_tasks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    entity_id: Mapped[int] = mapped_column(
+        ForeignKey("target_entities.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    entity_risk_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("entity_risks.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    severity: Mapped[str] = mapped_column(String(16), default="风险", nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(32), default="待核验", nullable=False, index=True)
+    assignee: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    due_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    verification_result: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    disposition: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resolution_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+
+# Modified by DingJiaye: 2026-09-01 — 可维护的客户关联图谱数据，支持把风险沿股东、
+# 融资银行、供应商、关联方及国家地区关系链进行人工追踪。
+class EntityRelationship(Base):
+    """监测主体与外部实体之间的可核验关系。"""
+
+    __tablename__ = "entity_relationships"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    entity_id: Mapped[int] = mapped_column(
+        ForeignKey("target_entities.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    related_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    related_type: Mapped[str] = mapped_column(String(64), nullable=False, default="关联方")
+    relationship_type: Mapped[str] = mapped_column(String(128), nullable=False, default="关联关系")
+    ownership_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    country_or_region: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    risk_signal: Mapped[str] = mapped_column(String(16), default="中性", nullable=False)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+
+# Modified by DingJiaye: 2026-09-01 — 支持用户导入/维护替代原先配置文件中的静态财务数字。
+class EntityFinancialRecord(Base):
+    """主体财务指标的手工或 Excel 导入记录。"""
+
+    __tablename__ = "entity_financial_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    entity_id: Mapped[int] = mapped_column(
+        ForeignKey("target_entities.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    statement_type: Mapped[str] = mapped_column(String(32), default="context", nullable=False, index=True)
+    period: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    metric_key: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    metric_label: Mapped[str] = mapped_column(String(256), nullable=False)
+    value: Mapped[str] = mapped_column(String(128), nullable=False)
+    unit: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    source_name: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
+    source_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+
 class CreditUpdate(Base):
     """公开信息预警灯号变化日志：正常 | 关注 | 预警 | 高风险。"""
 
