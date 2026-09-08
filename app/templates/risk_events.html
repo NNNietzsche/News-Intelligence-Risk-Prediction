@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}风险变化 — {{ app_name }}{% endblock %}
+
+{% block content %}
+<main class="risk-events-page">
+  <header class="risk-events-header">
+    <div>
+      <span>RISK INTELLIGENCE AGENT</span>
+      <h1>风险变化</h1>
+      <p>汇总新闻汇总与主体评估中已识别为“风险”的公开资讯，按最新时间排序。</p>
+    </div>
+    <a href="/daily-news" class="risk-events-back">返回新闻汇总</a>
+  </header>
+
+  <section class="risk-events-list" aria-label="风险新闻清单">
+    {% for item in items %}
+    <article class="risk-events-item">
+      <div class="risk-events-item-head">
+        <span class="risk-level-tag risk-tag-高">风险</span>
+        <span class="risk-events-scope">{{ item.scope }}</span>
+        <time>{% if item.published_at %}{{ item.published_at|tokyo_time("%Y-%m-%d %H:%M") }}{% else %}发布时间待核验{% endif %}</time>
+      </div>
+      <h2>{{ item.title }}</h2>
+      {% if item.summary %}<p>{{ item.summary }}</p>{% endif %}
+      <footer>
+        {% if item.category %}<span>{{ item.category }}</span>{% endif %}
+        {% if item.source_url %}<a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">{{ item.source_name or '查看来源' }}</a>{% else %}<span>来源未标注</span>{% endif %}
+      </footer>
+    </article>
+    {% else %}
+    <div class="risk-events-empty">当前没有已识别为风险的新闻。</div>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

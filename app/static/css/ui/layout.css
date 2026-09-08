@@ -183,6 +183,13 @@ body.app-agent-shell::before {
 .daily-agent-hero .agent-overview-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .daily-monitor-metrics .metric-risk::before { background: #c8645c; }
 
+/* 统计项支持按钮交互时，沿用原三列指标排版。
+   Modified by DingJiaye: 2026-09-07. */
+.agent-overview-metrics > button { display:grid; gap:3px; min-height:62px; padding:10px 15px; background:rgba(255,255,255,.78); }
+.daily-agent-hero .agent-overview-metrics > button { min-height:53px; padding:12px 15px !important; }
+.daily-monitor-metrics > button { position:relative; gap:4px !important; }
+.daily-monitor-metrics > button::before { content:""; position:absolute; top:0; right:0; left:0; height:3px; background:#81a9ca; }
+
 .app-agent-shell .app-shell { height: calc(100vh - 72px); background: transparent; }
 .app-agent-shell .app-main { scrollbar-color: #a4b6c8 transparent; scrollbar-width: thin; }
 .app-agent-shell .app-main::-webkit-scrollbar { width: 9px; }.app-agent-shell .app-main::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 10px; background: #9fb1c2; background-clip: padding-box; }

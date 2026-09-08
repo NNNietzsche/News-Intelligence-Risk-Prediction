@@ -552,6 +552,30 @@ class NewsArticle(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+# Modified by DingJiaye: 2026-09-08 — Yahoo Finance 公开行情快照与新闻采集分开保存，
+# 避免把市场价格伪装成新闻，也使宏观面板可在搜索服务不可用时独立更新。
+class MarketQuoteSnapshot(Base):
+    """Yahoo Finance 公开市场数据快照（指数、大宗商品、汇率）。"""
+
+    __tablename__ = "market_quote_snapshots"
+    __table_args__ = (
+        UniqueConstraint("symbol", "as_of", name="uq_market_quote_symbol_as_of"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    symbol: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    quote_group: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    price: Mapped[float] = mapped_column(Float, nullable=False)
+    previous_close: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    change_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    change_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    currency: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    as_of: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    source_url: Mapped[str] = mapped_column(String(1024), nullable=False)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
 class TargetEntity(Base):
     """主体评估 — 重点监控主体。"""
 

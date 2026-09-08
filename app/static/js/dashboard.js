@@ -1301,6 +1301,12 @@
     }
     var panel = document.getElementById("module-panel-" + code);
     if (!panel) return false;
+    // 从侧栏切换板块时优先恢复全量视图，避免先前的风险筛选将目标板块
+    // 隐藏后，只剩空白内容区。
+    if (panel.hidden) {
+      if (typeof window.clearNewsRiskFilters === "function") window.clearNewsRiskFilters();
+      panel.hidden = false;
+    }
     panel.scrollIntoView({ behavior: "smooth", block: "start" });
     return true;
   }

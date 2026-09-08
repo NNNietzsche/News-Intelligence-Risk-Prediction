@@ -92,6 +92,34 @@
   }
 
   window.applyNewsRiskFilter = apply;
+  window.clearNewsRiskFilters = function () {
+    activeRiskTypes.clear();
+    activeLevels.clear();
+    searchTerm = "";
+    if (searchInput) searchInput.value = "";
+    syncButtons();
+    apply();
+  };
+  // Modified by DingJiaye: 2026-09-07 — 风险总览统计卡与左侧筛选共用同一状态，
+  // 点击“需关注 / 风险”只影响当前日报页面已汇总的资讯。
+  window.applyDailyRiskLevelFilter = function (scope) {
+    var levels = scope === "risk" ? ["高", "极高"] : ["中", "高", "极高"];
+    var current = Array.from(activeLevels);
+    var same = current.length === levels.length && levels.every(function (level) { return activeLevels.has(level); });
+    activeLevels.clear();
+    if (!same) levels.forEach(function (level) { activeLevels.add(level); });
+    document.querySelectorAll("[data-agent-news-level]").forEach(function (button) {
+      var on = !same && button.getAttribute("data-agent-news-level") === scope;
+      button.classList.toggle("is-active", on);
+      button.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    syncButtons();
+    apply();
+    document.getElementById("global-risk-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  document.querySelectorAll("[data-agent-news-level]").forEach(function (button) {
+    button.addEventListener("click", function () { window.applyDailyRiskLevelFilter(button.getAttribute("data-agent-news-level")); });
+  });
   syncButtons();
   apply();
   riskButtons.forEach(function (button) {

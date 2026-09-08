@@ -60,6 +60,7 @@ from app.services.risk_reasoning import build_risk_reasoning
 from app.services.news_risk_tags import normalize_display_risk_level
 from app.services.news_quality import is_substantive_news_item
 from app.services.daily_news_summary import build_daily_news_summary
+from app.services.market_data import grouped_latest_market_quotes, macro_fx_cross_rates, market_chart_series
 from app.services.industry_analysis import IndustryAnalysisService, source_list_html
 from app.services.industry_migration import migrate_main_db_industry_reports
 from app.services.news_section_router import item_in_module_scope
@@ -82,7 +83,9 @@ app = FastAPI(title=settings.app_name, version="2.1.0")
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+# `app/templates` 存放常规页面；仓库根目录的 demo.html 是“资产风险监控日报”
+# 的正式动态模板，保留在原位置便于与设计原稿同步维护。Modified by DingJiaye.
+templates = Jinja2Templates(directory=[str(TEMPLATES_DIR), str(BASE_DIR.parent)])
 templates.env.filters["tokyo_time"] = format_tokyo
 templates.env.filters["bilingual_name"] = split_bilingual_display_name
 app.include_router(api_router, prefix="/api/v1")
@@ -380,7 +383,6 @@ def _daily_news_context(
     grouped: dict[str, list] = {k: [] for k in allowed_codes}
     for card in display_cards:
         grouped.setdefault(card.module_code, []).append(card)
-
     overview = {
         "total": len(display_cards),
         "high": sum(1 for e in display_cards if e.risk_level in {"高", "极高"}),
@@ -1028,6 +1030,102 @@ def daily_news_page(
     return templates.TemplateResponse("dashboard.html", ctx)
 
 
+@app.get("/macro-data", response_class=HTMLResponse)
+def macro_data_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """独立宏观数据页：行情与日报新闻分开呈现，均只使用公开数据缓存。"""
+    today = tokyo_today()
+    return templates.TemplateResponse(
+        "macro_data.html",
+        {
+            "request": request,
+            "app_name": settings.app_name,
+            "active_page": "macro_data",
+            "page_title": "宏观数据",
+            "page_subtitle": "主流指数、大宗商品与主要汇率公开行情",
+            "report_date": today.isoformat(),
+            "macro_market_quotes": grouped_latest_market_quotes(db),
+            "macro_fx_cross_rates_json": json.dumps(macro_fx_cross_rates(db), ensure_ascii=False),
+            "macro_market_chart_json": json.dumps(market_chart_series(db), ensure_ascii=False),
+            "pages": PAGE_META,
+        },
+    )
+
+
+def _asset_risk_daily_context(*, request: Request, report_date: str | None, db: Session) -> dict:
+    """资产风险日报只使用已入库的公开资讯，避免静态演示数据被误认为真实数据。"""
+    rd = _parse_report_date(report_date)
+    today = tokyo_today()
+    if rd > today:
+        rd = today
+    start = rd - timedelta(days=6)
+    modules = {"B": MODULE_CODES["B"], "D": MODULE_CODES["D"]}
+    raw_rows = (
+        db.query(NewsArticle)
+        .filter(NewsArticle.module_code.in_(tuple(modules)))
+        .filter(NewsArticle.report_date >= start)
+        .filter(NewsArticle.report_date <= rd)
+        .filter(NewsArticle.window_hours.in_((NEWS_WINDOW_HOURS_24, NEWS_WINDOW_HOURS_7X24)))
+        .all()
+    )
+    rows = _dedupe_daily_news(raw_rows)
+
+    def _social_for(entry: NewsArticle) -> dict:
+        return resolve_social_source(source_url=entry.source_url, structured_json=entry.structured_json)
+
+    cards = build_display_cards(db, rows, social_resolver=_social_for)
+    cards.sort(
+        key=lambda card: (_published_timestamp(getattr(card, "published_at", None)), int(getattr(card, "id", 0) or 0)),
+        reverse=True,
+    )
+    summary = build_daily_news_summary(cards, report_date=rd.isoformat(), modules=modules, db=db)
+
+    dates = [start + timedelta(days=index) for index in range(7)]
+    labels = [f"{item.month}/{item.day}" for item in dates]
+    event_series = {code: [0] * len(dates) for code in modules}
+    risk_series = {"普通": [0] * len(dates), "关注": [0] * len(dates), "风险": [0] * len(dates)}
+    level_label = {"低": "普通", "中": "关注", "高": "风险", "极高": "风险"}
+    for item in rows:
+        offset = (item.report_date - start).days if item.report_date else -1
+        if 0 <= offset < len(dates):
+            if item.module_code in event_series:
+                event_series[item.module_code][offset] += 1
+            risk_series[level_label.get(item.risk_level, "普通")][offset] += 1
+
+    signal_counts = {"普通": 0, "关注": 0, "风险": 0}
+    module_signal_counts = {
+        code: {"普通": 0, "关注": 0, "风险": 0}
+        for code in modules
+    }
+    for card in cards:
+        level = level_label.get(card.risk_level, "普通")
+        signal_counts[level] += 1
+        if card.module_code in module_signal_counts:
+            module_signal_counts[card.module_code][level] += 1
+    source_count = len({(card.source_url or card.source_title or "").strip() for card in cards if (card.source_url or card.source_title)})
+    chart_data = {
+        "labels": labels,
+        "middleEast": event_series["B"],
+        "macro": event_series["D"],
+        "ordinary": risk_series["普通"],
+        "watch": risk_series["关注"],
+        "risk": risk_series["风险"],
+    }
+    return {
+        "request": request, "app_name": settings.app_name, "active_page": "asset_risk_daily",
+        "page_title": "资产风险监控日报", "page_subtitle": "基于公开信息的资产风险监测与 AI 研判",
+        "report_date": rd.isoformat(), "range_label": f"{start.isoformat()} 至 {rd.isoformat()}",
+        "summary": summary, "cards": cards[:12], "signal_counts": signal_counts,
+        "module_signal_counts": module_signal_counts,
+        "source_count": source_count, "event_count": len(cards),
+        "chart_data_json": json.dumps(chart_data, ensure_ascii=False),
+        "deepseek_available": not is_placeholder_key(getattr(settings, "deepseek_api_key", None)),
+        "module_codes_csv": "B,D", "window_hours": NEWS_WINDOW_HOURS_24,
+    }
+
+
 @app.get("/daily-news-7x24", response_class=HTMLResponse)
 def daily_news_7x24_page(
     request: Request,
@@ -1045,6 +1143,100 @@ def daily_news_7x24_page(
         query["module_code"] = module_code
     suffix = f"?{urlencode(query)}" if query else ""
     return RedirectResponse(url=f"/daily-news{suffix}", status_code=302)
+
+
+@app.get("/asset-risk-daily", response_class=HTMLResponse)
+def asset_risk_daily_page(
+    request: Request,
+    report_date: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """资产风险监控日报：从日报资讯库读取公开信源并呈现 AI 汇总。"""
+    return templates.TemplateResponse(
+        "demo.html",
+        _asset_risk_daily_context(request=request, report_date=report_date, db=db),
+    )
+
+
+@app.get("/risk-events", response_class=HTMLResponse)
+def risk_events_page(request: Request, db: Session = Depends(get_db)):
+    """全局风险清单：汇总日报与主体评估中已被判定为风险的资讯。"""
+
+    items: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+
+    daily_rows = (
+        db.query(NewsArticle)
+        .filter(NewsArticle.risk_level.in_(("高", "极高")))
+        .order_by(NewsArticle.published_at.desc(), NewsArticle.id.desc())
+        .limit(500)
+        .all()
+    )
+    for row in daily_rows:
+        key = ((row.source_url or "").strip(), (row.title or "").strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append({
+            "title": row.title,
+            "summary": row.summary,
+            "impact": row.impact_analysis,
+            "source_name": row.source_title,
+            "source_url": row.source_url,
+            "published_at": row.published_at,
+            "scope": modules_for_page("daily_news").get(row.module_code, row.module_code),
+            "risk_level": row.risk_level,
+            "category": row.risk_category,
+        })
+
+    entity_rows = (
+        db.query(EntityRisk, TargetEntity)
+        .join(TargetEntity, TargetEntity.id == EntityRisk.entity_id)
+        .filter(EntityRisk.provenance != "demo")
+        .order_by(EntityRisk.published_at.desc(), EntityRisk.id.desc())
+        .limit(800)
+        .all()
+    )
+    for row, entity in entity_rows:
+        level = normalize_display_risk_level(
+            title=row.title,
+            summary=row.summary,
+            impact=row.impact_analysis,
+            level=row.risk_level,
+        )
+        if level not in {"高", "极高"}:
+            continue
+        key = ((row.source_url or "").strip(), (row.title or "").strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append({
+            "title": row.title,
+            "summary": row.summary,
+            "impact": row.impact_analysis,
+            "source_name": row.source_name,
+            "source_url": row.source_url,
+            "published_at": row.published_at,
+            "scope": entity.display_name or entity.name,
+            "risk_level": level,
+            "category": row.risk_category,
+        })
+
+    items.sort(
+        key=lambda item: _published_timestamp(item.get("published_at")), reverse=True
+    )
+    return templates.TemplateResponse(
+        "risk_events.html",
+        {
+            "request": request,
+            "app_name": settings.app_name,
+            "active_page": "risk_events",
+            "page_title": "风险变化",
+            "page_subtitle": "已识别风险事件",
+            "pages": PAGE_META,
+            "items": items,
+        },
+    )
 
 
 @app.get("/entity-assessment", response_class=HTMLResponse)

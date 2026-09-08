@@ -100,6 +100,7 @@ from app.services.data_source_service import (
 )
 from app.services.source_registry import source_registry_state
 from app.services.mita_search import MitaSearchClient, split_search_terms
+from app.services.market_data import latest_market_quotes, refresh_market_quotes
 from app.services.api_keys import is_placeholder_key
 from app.services.deepseek_analyzer import DeepSeekAnalyzer
 from app.services.evidence_cards import (
@@ -342,6 +343,33 @@ def send_daily_brief(
 @router.get("/modules")
 def list_modules():
     return [{"code": k, "name": v} for k, v in MODULE_CODES.items()]
+
+
+@router.get("/market-data")
+def list_market_data(db: Session = Depends(get_db)):
+    """读取已缓存的公开行情，不主动触发外网请求。"""
+    return {
+        "provider": "FRED public CSV（核心）/ Yahoo Finance（扩展回退）",
+        "quotes": latest_market_quotes(db),
+        "message": "公开行情可能存在延迟，仅供风险监测参考。",
+    }
+
+
+@router.post("/market-data/refresh")
+def refresh_market_data(db: Session = Depends(get_db)):
+    """手动刷新主流指数、大宗商品和主要汇率的公开行情快照。"""
+    result = refresh_market_quotes(db)
+    if result["updated_count"] == 0:
+        first_failure = (result.get("failed") or [{}])[0]
+        failure_message = str(first_failure.get("error") or "公开行情源未返回可用行情")
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                f"公开行情源未返回可用数据（{failure_message}）。"
+                "这通常是公开接口限流或网络拦截导致；请稍后重试，已保留上一次成功缓存。"
+            ),
+        )
+    return result
 
 
 @router.get("/entries", response_model=list[RiskEntryOut])

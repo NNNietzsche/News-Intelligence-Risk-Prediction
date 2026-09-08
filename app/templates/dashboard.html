@@ -16,6 +16,7 @@
       <a class="mod-name mod-jump" href="#module-panel-{{ code }}" data-module="{{ code }}">{{ name }}</a>
     </li>
     {% endfor %}
+    <li><a class="mod-name" href="/macro-data">宏观数据</a></li>
   </ul>
   <div class="daily-sidebar-footer">
     <div class="daily-sidebar-actions">
@@ -72,7 +73,11 @@
       {# Modified by DingJiaye: 2026-08-28 — 合并全局风险概览与 Agent 工作流，减少重复大卡片。 #}
       <div class="agent-overview-inline" id="agent-workflow" aria-labelledby="global-risk-overview">
         <div class="agent-overview-inline-head"><div><span>REAL-TIME MONITORING · {{ report_date|replace('-', '.') }}</span><h2 id="global-risk-overview">实时风险监测概览</h2></div><em>数据随入库资讯更新</em></div>
-        <div class="agent-overview-metrics daily-monitor-metrics"><div class="metric-events"><b>{{ agent_global_overview.events }}</b><span>新事件</span><small>已纳入今日情报流</small></div><div class="metric-alerts"><b>{{ agent_global_overview.alerts }}</b><span>需关注</span><small>关注与风险事件</small></div><div class="metric-risk"><b>{{ agent_global_overview.risks }}</b><span>风险</span><small>高风险事件</small></div></div>
+        <div class="agent-overview-metrics daily-monitor-metrics" aria-label="日报风险统计">
+          <div class="metric-events"><b>{{ agent_global_overview.events }}</b><span>新事件</span><small>已纳入今日情报流</small></div>
+          <button type="button" class="metric-alerts agent-metric-filter" data-agent-news-level="watch" aria-pressed="false"><b>{{ agent_global_overview.alerts }}</b><span>需关注</span><small>仅显示关注与风险事件</small></button>
+          <button type="button" class="metric-risk agent-metric-filter" data-agent-news-level="risk" aria-pressed="false"><b>{{ agent_global_overview.risks }}</b><span>风险</span><small>仅显示风险事件</small></button>
+        </div>
         <div class="agent-overview-status daily-monitor-status"><div><strong>●</strong><span>{% if agent_global_overview.alerts %}发现 {{ agent_global_overview.alerts }} 条需关注事件{% else %}当前未发现需关注事件{% endif %}</span></div></div>
       </div>
     </section>
@@ -252,7 +257,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="/static/js/news_risk_filters.js?v=20260828-1"></script>
+<script src="/static/js/news_risk_filters.js?v=20260908-1"></script>
 <script>
   window.REPORT_DATE = "{{ report_date }}";
   window.PIPELINE_MODULES = "{{ module_codes_csv }}".split(",").filter(Boolean);
@@ -268,7 +273,7 @@
     {title: {{ entry.title|tojson }}},
     {% endfor %}
   ];
-  window.AGENT_PROACTIVE_URL = "/daily-news?report_date={{ report_date }}";
+  window.AGENT_PROACTIVE_URL = "/risk-events";
 </script>
 <script>
   (function () {

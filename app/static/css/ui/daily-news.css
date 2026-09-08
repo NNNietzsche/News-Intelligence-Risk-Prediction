@@ -240,6 +240,45 @@ body.daily-news-ui .risk-level-tag.risk-tag-中::before { animation: risk-signal
 body.daily-news-ui .risk-level-tag.risk-tag-高::before,
 body.daily-news-ui .risk-level-tag.risk-tag-极高::before { animation: risk-signal-pulse 1.25s ease-in-out infinite; }
 
+/* 可点击的日报风险统计：保持指标卡原有信息层级，不增加额外卡片。
+   Modified by DingJiaye: 2026-09-07. */
+.daily-monitor-metrics .agent-metric-filter {
+  appearance: none;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.daily-monitor-metrics .agent-metric-filter:hover,
+.daily-monitor-metrics .agent-metric-filter.is-active { background: rgba(42, 101, 148, .06); }
+.daily-monitor-metrics .agent-metric-filter.is-active { box-shadow: inset 0 -2px 0 #2f6594; }
+
+/* 全局风险清单：保留证据密度，避免套叠卡片。
+   Modified by DingJiaye: 2026-09-07. */
+.risk-events-page { width:min(1120px, calc(100% - 48px)); margin:38px auto 72px; }
+.risk-events-header { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; padding:0 0 18px; border-bottom:1px solid #cfdde8; }
+.risk-events-header span { display:block; color:#5981a4; font-size:11px; font-weight:800; letter-spacing:.14em; }
+.risk-events-header h1 { margin:6px 0; color:#183f62; font-size:28px; }
+.risk-events-header p { margin:0; color:#718699; font-size:13px; }
+.risk-events-back { color:#2f6594; font-size:13px; font-weight:750; text-decoration:none; white-space:nowrap; }
+.risk-events-list { margin-top:18px; border-top:2px solid #c8645c; }
+.risk-events-item { padding:18px 10px; border-bottom:1px solid #dbe5ed; }
+.risk-events-item:hover { background:#f8fbfd; }
+.risk-events-item-head { display:flex; align-items:center; gap:9px; font-size:12px; color:#71869a; }
+.risk-events-item-head time { margin-left:auto; }
+.risk-events-scope { color:#3d668a; font-weight:750; }
+.risk-events-item h2 { margin:10px 0 7px; color:#263d54; font-size:18px; }
+.risk-events-item p { margin:0; color:#5d7183; font-size:14px; line-height:1.75; }
+.risk-events-item footer { display:flex; gap:12px; margin-top:12px; color:#7890a3; font-size:12px; }
+.risk-events-item footer a { color:#376a94; text-decoration:none; }
+.risk-events-empty { padding:52px 0; color:#8597a6; text-align:center; }
+@media (max-width:700px) { .risk-events-page { width:calc(100% - 28px); margin-top:24px; } .risk-events-header { align-items:flex-start; flex-direction:column; } .risk-events-item-head { flex-wrap:wrap; } .risk-events-item-head time { width:100%; margin-left:0; } }
+
 /* 本轮 Command Center 日报深色层已回滚，保留代码仅作后续评估，不参与渲染。
  * Modified by DingJiaye: 2026-08-31. */
 @media not all {

@@ -12,7 +12,10 @@
 
   var selectors = [
     ".daily-summary-report",
-    ".module-panel",
+    // 日报板块是主内容容器，不能参与“进入视区后才显示”的动画。
+    // 在 app-main 的独立滚动容器内，浏览器有时不会及时触发
+    // IntersectionObserver，导致已加载的“宏观市场”等板块看起来像空白页。
+    // Modified by DingJiaye: 2026-09-08 — 保证情报板块始终立即可见。
     ".risk-event-card",
     ".timeline-item",
     ".entity-latest-panel",

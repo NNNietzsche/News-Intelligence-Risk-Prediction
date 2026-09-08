@@ -191,7 +191,11 @@
     {# Modified by DingJiaye: 2026-08-28 — 主体页复用全局风险总览，让研判对象、证据与风险状态一目了然。 #}
     <section class="agent-overview-panel entity-agent-overview" id="agent-workflow" aria-labelledby="entity-risk-overview">
       <div class="agent-overview-head"><div><span>TODAY · {{ report_date|replace('-', '.') }}</span><h2 id="entity-risk-overview">{{ selected_entity.display_name or selected_entity.name }} · RISK OVERVIEW</h2></div><span class="agent-live-dot">Risk Intelligence Agent</span></div>
-      <div class="agent-overview-metrics entity-monitor-metrics"><div class="metric-events"><b>{{ entity_agent_overview.events }}</b><span>新事件</span><small>近三个月公开事件</small></div><div class="metric-alerts"><b>{{ entity_agent_overview.alerts }}</b><span>需关注</span><small>关注与风险事件</small></div><div class="metric-risk"><b>{{ entity_agent_overview.risks }}</b><span>风险</span><small>高风险事件</small></div></div>
+      <div class="agent-overview-metrics entity-monitor-metrics" aria-label="主体风险统计">
+        <div class="metric-events"><b>{{ entity_agent_overview.events }}</b><span>新事件</span><small>近三个月公开事件</small></div>
+        <button type="button" class="metric-alerts agent-metric-filter" data-entity-news-level="watch" aria-pressed="false"><b>{{ entity_agent_overview.alerts }}</b><span>需关注</span><small>仅显示关注与风险事件</small></button>
+        <button type="button" class="metric-risk agent-metric-filter" data-entity-news-level="risk" aria-pressed="false"><b>{{ entity_agent_overview.risks }}</b><span>风险</span><small>仅显示风险事件</small></button>
+      </div>
       <div class="agent-overview-status"><div><strong>●</strong><span>{% if entity_agent_overview.alerts %}发现 {{ entity_agent_overview.alerts }} 条需关注事件{% else %}当前未发现需关注事件{% endif %}</span></div></div>
     </section>
 
@@ -243,6 +247,7 @@
           class="risk-event-card level-border-{{ e.display_risk_level or e.risk_level }}"
           data-category="{{ e.risk_category or '' }}"
           data-tab="{{ e.risk_tab or '' }}"
+          data-risk-level="{{ e.display_risk_level or e.risk_level }}"
           data-search="{{ ((e.display_title or e.title or '') ~ ' ' ~ (e.display_overview or '') ~ ' ' ~ (e.source_name or '') ~ ' ' ~ (e.related_company or ''))|lower }}"
         >
           <div class="risk-event-top">
@@ -349,7 +354,7 @@
     {title: {{ (risk.display_title or risk.title)|tojson }}},
     {% endfor %}
   ];
-  window.AGENT_PROACTIVE_URL = "#risk-panel-title";
+  window.AGENT_PROACTIVE_URL = "/risk-events";
 </script>
 {# Modified by DingJiaye: 2026-08-26 — 更新版本号，确保浏览器加载非阻塞面板脚本。 #}
 <script src="/static/js/entity_assessment.js?v=20260826-1"></script>
@@ -421,6 +426,31 @@
       activeTab = key || "all";
       applyFilters();
     };
+    // Modified by DingJiaye: 2026-09-07 — 顶部统计只筛选当前主体已展示的公开事件。
+    window.applyEntityRiskLevelFilter = function (scope) {
+      var levels = scope === "risk" ? ["高", "极高"] : ["中", "高", "极高"];
+      var cards = document.querySelectorAll("#risk-event-list .risk-event-card");
+      var hasActive = Array.prototype.some.call(cards, function (card) { return card.getAttribute("data-agent-level-filter") === scope; });
+      cards.forEach(function (card) {
+        var show = !hasActive || levels.indexOf(card.getAttribute("data-risk-level") || "") !== -1;
+        card.setAttribute("data-agent-level-filter", hasActive ? "" : scope);
+        card.hidden = !show;
+        card.classList.toggle("hidden", !show);
+      });
+      document.querySelectorAll("[data-entity-news-level]").forEach(function (button) {
+        var on = !hasActive && button.getAttribute("data-entity-news-level") === scope;
+        button.classList.toggle("is-active", on);
+        button.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      if (emptyEl) {
+        var visible = Array.prototype.some.call(cards, function (card) { return !card.hidden; });
+        emptyEl.hidden = visible;
+      }
+      document.getElementById("risk-panel-title")?.scrollIntoView({behavior: "smooth", block: "start"});
+    };
+    document.querySelectorAll("[data-entity-news-level]").forEach(function (button) {
+      button.addEventListener("click", function () { window.applyEntityRiskLevelFilter(button.getAttribute("data-entity-news-level")); });
+    });
   })();
 </script>
 {% endblock %}

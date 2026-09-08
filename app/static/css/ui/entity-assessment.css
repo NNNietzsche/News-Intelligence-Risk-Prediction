@@ -459,10 +459,16 @@ body.page-entity_assessment .risk-level-tag.risk-tag-极高::before { animation:
    Modified by DingJiaye: 2026-08-28. */
 .entity-agent-overview .entity-monitor-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .entity-agent-overview .entity-monitor-metrics > div { position: relative; gap: 4px; }
+.entity-agent-overview .entity-monitor-metrics .agent-metric-filter { appearance:none; display:grid; width:100%; min-width:0; border:0; border-radius:0; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+.entity-agent-overview .entity-monitor-metrics .agent-metric-filter:hover,
+.entity-agent-overview .entity-monitor-metrics .agent-metric-filter.is-active { background:rgba(42,101,148,.06); }
+.entity-agent-overview .entity-monitor-metrics .agent-metric-filter.is-active { box-shadow:inset 0 -2px 0 #2f6594; }
 .entity-agent-overview .entity-monitor-metrics > div::before { content: ""; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: #81a9ca; }
 .entity-agent-overview .entity-monitor-metrics .metric-alerts::before { background: #d1a23a; }
 .entity-agent-overview .entity-monitor-metrics .metric-risk::before { background: #c8645c; }
 .entity-agent-overview .entity-monitor-metrics small { color: #91a0ad; font-size: 10px; }
+.entity-agent-overview .entity-monitor-metrics > button { position:relative; gap:4px; }
+.entity-agent-overview .entity-monitor-metrics > button::before { content:""; position:absolute; top:0; right:0; left:0; height:3px; background:#81a9ca; }
 
 /* 近三个月公开信息事件：只对 AI 判定为关注或风险的报道展示呼吸灯标签。
    Modified by DingJiaye: 2026-08-28. */

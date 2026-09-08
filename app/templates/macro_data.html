@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}宏观数据 — {{ app_name }}{% endblock %}
+
+{% block head_extra %}
+{# Modified by DingJiaye: 2026-09-08 — 宏观数据独立页面按需加载，避免日报样式与行情面板相互影响。 #}
+<link rel="stylesheet" href="/static/css/ui/macro-data.css?v=20260908-1" />
+{% endblock %}
+
+{% block page_sidebar %}
+<aside class="sidebar page-rail macro-data-rail" aria-label="新闻与宏观数据索引">
+  <div class="daily-agent-side-status" aria-label="公开数据状态"><span aria-hidden="true"></span> 公开市场数据 · 缓存监测</div>
+  <h2 class="daily-index-title">索引</h2>
+  <ul class="run-list daily-index-list">
+    <li><a class="mod-name" href="/daily-news#module-panel-B">中东日报</a></li>
+    <li><a class="mod-name" href="/daily-news#module-panel-C">大型企业</a></li>
+    <li><a class="mod-name" href="/daily-news#module-panel-D">宏观市场</a></li>
+    <li><a class="mod-name active" href="/macro-data" aria-current="page">宏观数据</a></li>
+  </ul>
+  <div class="daily-sidebar-footer">
+    <div class="daily-sidebar-actions"><button type="button" class="sidebar-action-primary" id="btn-refresh-market-data">刷新行情</button></div>
+    <p class="hint" id="macro-market-state" role="status" aria-live="polite">按最近可用公开收盘价展示</p>
+  </div>
+</aside>
+{% endblock %}
+
+{% block content %}
+<main class="layout content-shell macro-data-page">
+  <section class="macro-data-content" aria-labelledby="macro-data-title">
+    <header class="macro-data-heading">
+      <div><span>MACRO DATA · PUBLIC MARKET MONITOR</span><h1 id="macro-data-title">宏观数据</h1><p>主流指数、大宗商品与主要汇率；行情与新闻情报分别管理。</p></div>
+      <time datetime="{{ report_date }}">更新基准日 {{ report_date }}</time>
+    </header>
+
+    <section class="macro-market-panel" aria-labelledby="macro-market-title">
+      <div class="macro-market-head">
+        <div><span>PUBLIC MARKET DATA · DAILY SNAPSHOT</span><h2 id="macro-market-title">大宗商品、主流指数与主要汇率</h2></div>
+        <button type="button" class="macro-market-refresh" data-macro-refresh>刷新行情</button>
+      </div>
+      {% if macro_market_quotes %}
+      <div class="macro-market-groups">
+        {% for group_code, group_label in [('index', '主流指数'), ('commodity', '大宗商品'), ('fx', '主要汇率')] %}
+        {% set quotes = macro_market_quotes.get(group_code, []) %}
+        <section class="macro-quote-group" aria-labelledby="quote-group-{{ group_code }}">
+          <h3 id="quote-group-{{ group_code }}">{{ group_label }}</h3>
+          <div class="macro-quote-list">
+            {% if group_code == 'fx' %}
+            <div class="macro-cross-rate" id="macro-cross-rate">
+              <div class="macro-cross-copy"><span id="macro-cross-name">人民币 / 日元</span><b id="macro-cross-price">—</b><em id="macro-cross-change">—</em></div>
+              <div class="macro-fx-switch" role="group" aria-label="人民币日元换算方向"><button type="button" class="is-active" data-macro-fx-direction="cny_jpy">人民币 / 日元</button><button type="button" data-macro-fx-direction="jpy_cny">日元 / 人民币</button></div>
+            </div>
+            {% endif %}
+            {% for quote in quotes %}
+            <a class="macro-quote" href="{{ quote.source_url }}" target="_blank" rel="noopener noreferrer">
+              <span class="macro-quote-name">{{ quote.name }}</span>
+              <b>{{ '%.4f'|format(quote.price) if quote.group == 'fx' else '{:,.2f}'.format(quote.price) }}</b>
+              {% if quote.change_pct is not none %}<em class="{% if quote.change_pct > 0 %}is-up{% elif quote.change_pct < 0 %}is-down{% endif %}">{{ '%+.2f'|format(quote.change_pct) }}%</em>{% else %}<em>—</em>{% endif %}
+            </a>
+            {% endfor %}
+          </div>
+        </section>
+        {% endfor %}
+      </div>
+      <p class="macro-market-note">主要品种优先读取 FRED 公开日线；如需扩展则回退 Yahoo Finance。数据按最近可用收盘价缓存，并非实时交易报价。</p>
+      {% else %}
+      <div class="macro-market-empty"><p>尚未缓存市场行情。点击“刷新行情”导入主流指数、大宗商品及主要汇率。</p></div>
+      {% endif %}
+    </section>
+
+    <section class="macro-market-trends-panel" aria-labelledby="macro-market-trends-title">
+      <header class="macro-market-trends-head"><div><span>30D TREND · INDEXED</span><h2 id="macro-market-trends-title">市场走势</h2></div><p>各品种以近 30 个有效交易日首个数值 = 100 归一化，便于横向观察趋势。</p></header>
+      <div class="macro-chart-grid">
+        <section class="macro-chart-lane"><h3>主流指数</h3><div id="macro-market-chart-index" class="macro-market-chart" aria-label="主流指数近30日走势"></div></section>
+        <section class="macro-chart-lane"><h3>大宗商品</h3><div id="macro-market-chart-commodity" class="macro-market-chart" aria-label="大宗商品近30日走势"></div></section>
+        <section class="macro-chart-lane"><h3>主要汇率</h3><div id="macro-market-chart-fx" class="macro-market-chart" aria-label="主要汇率近30日走势"></div></section>
+      </div>
+    </section>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  window.MACRO_MARKET_CHART_DATA = {{ macro_market_chart_json|safe }};
+  window.MACRO_FX_CROSS_RATES = {{ macro_fx_cross_rates_json|safe }};
+  (function () {
+    var source = window.MACRO_MARKET_CHART_DATA || {groups: {}};
+    var rates = window.MACRO_FX_CROSS_RATES || {};
+    var charts = [];
+    var palette = ["#477ea8", "#78a692", "#bc8a53", "#858faf"];
+    function draw(element, group) {
+      if (!window.echarts || !element) return;
+      var lines = (source.groups || {})[group] || [];
+      var labels = [];
+      lines.forEach(function (line) { line.points.forEach(function (point) { if (labels.indexOf(point.date) === -1) labels.push(point.date); }); });
+      labels.sort();
+      var chart = window.echarts.init(element, null, {renderer: "canvas"}); charts.push(chart);
+      chart.setOption({animationDuration: 320, animationEasing: "cubicOut", color: palette, tooltip: {trigger: "axis", valueFormatter: function (value) { return value == null ? "—" : Number(value).toFixed(2); }}, grid: {left: 38, right: 12, top: 20, bottom: 36}, xAxis: {type: "category", data: labels, axisLine: {lineStyle: {color: "#cddbe4"}}, axisLabel: {color: "#8093a2", fontSize: 10}}, yAxis: {type: "value", scale: true, axisLine: {show: false}, splitLine: {lineStyle: {color: "#e6edf1"}}, axisLabel: {color: "#8093a2", fontSize: 10}}, series: lines.map(function (line) { var map = {}; line.points.forEach(function (point) { map[point.date] = point.value; }); return {name: line.name, type: "line", smooth: true, showSymbol: false, data: labels.map(function (date) { return map[date] == null ? null : map[date]; }), lineStyle: {width: 2}}; }), legend: {bottom: 0, textStyle: {color: "#687f91", fontSize: 10}, itemWidth: 10, itemHeight: 7}, graphic: !lines.length ? [{type: "text", left: "center", top: "middle", style: {text: "暂未取得足够历史行情", fill: "#8495a3", fontSize: 12}}] : []}, true);
+    }
+    ["index", "commodity", "fx"].forEach(function (group) { draw(document.getElementById("macro-market-chart-" + group), group); });
+    window.addEventListener("resize", function () { charts.forEach(function (chart) { chart.resize(); }); });
+    function renderCrossRate(direction) { var rate = rates[direction]; if (!rate) return; document.getElementById("macro-cross-name").textContent = rate.name; document.getElementById("macro-cross-price").textContent = Number(rate.price).toFixed(direction === "cny_jpy" ? 4 : 6); var change = document.getElementById("macro-cross-change"); if (rate.change_pct == null) { change.textContent = "—"; change.className = ""; } else { change.textContent = (rate.change_pct >= 0 ? "+" : "") + Number(rate.change_pct).toFixed(2) + "%"; change.className = rate.change_pct >= 0 ? "is-up" : "is-down"; } document.querySelectorAll("[data-macro-fx-direction]").forEach(function (button) { button.classList.toggle("is-active", button.dataset.macroFxDirection === direction); }); }
+    document.querySelectorAll("[data-macro-fx-direction]").forEach(function (button) { button.addEventListener("click", function () { renderCrossRate(button.dataset.macroFxDirection); }); }); renderCrossRate("cny_jpy");
+    document.querySelectorAll("[data-macro-refresh], #btn-refresh-market-data").forEach(function (button) { button.addEventListener("click", async function () { var original = button.textContent; button.disabled = true; button.textContent = "正在获取…"; try { var response = await fetch("/api/v1/market-data/refresh", {method: "POST"}); var payload = await response.json(); if (!response.ok) throw new Error(payload.detail || "行情刷新失败"); button.textContent = "已更新 " + payload.updated_count + " 项"; window.setTimeout(function () { window.location.reload(); }, 650); } catch (error) { var state = document.getElementById("macro-market-state"); if (state) state.textContent = error && error.message ? error.message : "刷新失败，请稍后重试。"; button.textContent = "刷新失败"; window.setTimeout(function () { button.textContent = original; button.disabled = false; }, 2200); } }); });
+  }());
+</script>
+{% endblock %}
