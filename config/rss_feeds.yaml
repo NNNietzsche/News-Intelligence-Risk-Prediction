@@ -21,6 +21,24 @@ module_defaults:
 queries:
   # A 的主体专属查询集中维护在 config/entity_targets.yaml，避免全量查询跨主体混入。
   A: []
+  F:
+    # 交通银行专项监测：四层信源均为可回溯的公开来源。
+    # 仅抓取负面、监管、信用、流动性、诉讼及重大舆情；普通产品宣传不进入日报。
+    - label: 交通银行官方披露
+      query: "site:bankcomm.com (交通银行 OR Bank of Communications) (公告 OR 风险提示 OR 资本充足率 OR 不良贷款 OR 减值 OR 诉讼 OR 反洗钱 OR 合规)"
+      priority: 36
+    - label: 上交所与港交所披露
+      query: "(site:sse.com.cn OR site:hkexnews.hk) (601328 OR 03328 OR 交通银行 OR Bank of Communications) (公告 OR 风险 OR 诉讼 OR 处罚 OR 减值 OR 不良 OR 资本)"
+      priority: 35
+    - label: 国家金融监管总局与人民银行
+      query: "(site:nfra.gov.cn OR site:pbc.gov.cn OR site:csrc.gov.cn) (交通银行 OR 交行) (处罚 OR 监管 OR 检查 OR 风险 OR 反洗钱 OR 消费者权益)"
+      priority: 34
+    - label: 政府与司法公开信息
+      query: "(site:gov.cn OR site:court.gov.cn) (交通银行 OR 交行) (处罚 OR 诉讼 OR 执行 OR 冻结 OR 风险 OR 违法)"
+      priority: 33
+    - label: 权威财经媒体负面报道
+      query: "(site:reuters.com OR site:caixin.com OR site:yicai.com OR site:21jingji.com OR site:stcn.com) (交通银行 OR Bank of Communications OR BOCOM) (监管 OR 处罚 OR 调查 OR 诉讼 OR 不良贷款 OR 减值 OR 亏损 OR 融资 OR 流动性 OR 风险)"
+      priority: 28
   B:
     # 官方/准官方来源优先；跨媒体只作为覆盖补充。
     - label: 沙特通讯社 SPA

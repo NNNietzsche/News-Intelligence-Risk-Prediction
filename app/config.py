@@ -154,6 +154,7 @@ MODULE_CODES = {
     "B": "中东日报",
     "C": "大型企业",
     "D": "宏观市场",
+    "F": "交通银行监测",
     "E": "授信报告与行业分析",
 }
 
@@ -172,8 +173,8 @@ def news_window_label(hours: int) -> str:
 
 # 三级页面与模块映射（深度研报走 IndustryAnalysis*，不占用 DailyRiskEntry）
 PAGE_MODULES = {
-    "daily_news": ("B", "C", "D"),
-    "news_7x24": ("B", "C", "D"),
+    "daily_news": ("F", "B", "C", "D"),
+    "news_7x24": ("F", "B", "C", "D"),
     "entity_assessment": ("A",),
 }
 

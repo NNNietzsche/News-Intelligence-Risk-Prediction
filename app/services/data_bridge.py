@@ -23,7 +23,7 @@ from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-NEWS_MODULES = {"B", "C", "D"}
+NEWS_MODULES = {"B", "C", "D", "F"}
 ENTITY_MODULE = "A"
 
 

@@ -29,18 +29,68 @@
   $$('[data-dialog-close]').forEach(function (button) { button.addEventListener("click", function () { closeDialog(button.getAttribute("data-dialog-close")); }); });
 
   var trendChart;
+  function trendSeries(data, key) {
+    return (data.points || []).map(function (point) { return Number(point[key] || 0); });
+  }
+  function updateTrendMetrics(data, days) {
+    var points = (data && data.points) || [];
+    var events = points.reduce(function (sum, point) { return sum + Number(point.events || 0); }, 0);
+    var watch = points.reduce(function (sum, point) { return sum + Number(point.watch || 0); }, 0);
+    var risk = points.reduce(function (sum, point) { return sum + Number(point.risk || 0); }, 0);
+    var set = function (id, value) { var node = document.getElementById(id); if (node) node.textContent = String(value); };
+    set("entity-risk-events-count", events);
+    set("entity-risk-watch-count", watch);
+    set("entity-risk-red-count", risk);
+    set("entity-risk-period-label", "近 " + days + " 天公开事件");
+    var status = document.getElementById("entity-risk-status-text");
+    var findings = watch + risk;
+    if (status) status.textContent = findings > 0 ? ("发现 " + findings + " 条需关注事件") : "当前未发现需关注事件";
+  }
+  function trendFallback(holder, data, errorMessage) {
+    var points = (data && data.points) || [];
+    var normal = trendSeries(data || {}, "normal");
+    var watch = trendSeries(data || {}, "watch");
+    var risk = trendSeries(data || {}, "risk");
+    var max = Math.max.apply(null, [1].concat(normal, watch, risk));
+    var width = 760, height = 190, padX = 24, padY = 22;
+    function polyline(values, color) {
+      if (!values.length) return "";
+      var step = values.length > 1 ? (width - padX * 2) / (values.length - 1) : 0;
+      return '<polyline fill="none" stroke="' + color + '" stroke-width="2" points="' + values.map(function (value, index) {
+        return (padX + step * index).toFixed(1) + ',' + (height - padY - (value / max) * (height - padY * 2)).toFixed(1);
+      }).join(" ") + '" />';
+    }
+    var hasEvents = normal.concat(watch, risk).some(function (value) { return value > 0; });
+    if (!hasEvents) {
+      holder.innerHTML = '<p class="workbench-empty">当前时间范围内暂无可展示的公开信息事件</p>';
+      return;
+    }
+    holder.innerHTML = '<div class="trend-fallback-legend"><span class="normal">普通</span><span class="watch">关注</span><span class="risk">风险</span></div>' +
+      '<svg class="trend-fallback-svg" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" role="img" aria-label="主体风险趋势图">' +
+      '<line x1="' + padX + '" y1="' + (height - padY) + '" x2="' + (width - padX) + '" y2="' + (height - padY) + '" stroke="#d9e5ee" />' +
+      polyline(normal, "#9aa8b7") + polyline(watch, "#d9a72d") + polyline(risk, "#ca5c5c") + '</svg>' +
+      '<div class="trend-fallback-labels"><span>' + escapeHtml(String(points[0] && points[0].date || "").slice(5)) + '</span><span>' + escapeHtml(String(points[points.length - 1] && points[points.length - 1].date || "").slice(5)) + '</span></div>' +
+      (errorMessage ? '<p class="workbench-note">图表组件未加载，已显示基础趋势。</p>' : '');
+  }
   async function loadTrend(days) {
     var holder = $("#entity-risk-trend-chart");
     if (!holder) return;
     holder.classList.add("is-loading");
     try {
-      var data = await fetchJson(api + "/risk-trends?days=" + days);
+      var query = "?days=" + encodeURIComponent(days);
+      if (window.REPORT_DATE) query += "&report_date=" + encodeURIComponent(window.REPORT_DATE);
+      var data = await fetchJson(api + "/risk-trends" + query);
+      updateTrendMetrics(data, days);
       if (!window.echarts) {
-        holder.textContent = "趋势图组件尚未加载";
+        trendFallback(holder, data, true);
         return;
       }
       trendChart = trendChart || window.echarts.init(holder);
       var labels = data.points.map(function (p) { return String(p.date).slice(5); });
+      var normal = trendSeries(data, "normal");
+      var watch = trendSeries(data, "watch");
+      var risk = trendSeries(data, "risk");
+      var hasEvents = normal.concat(watch, risk).some(function (value) { return value > 0; });
       trendChart.setOption({
         animationDuration: 420,
         animationEasing: "cubicOut",
@@ -50,11 +100,13 @@
         xAxis: {type: "category", boundaryGap: false, data: labels, axisLine: {lineStyle: {color: "#d7e3ed"}}, axisLabel: {color: "#70869b", fontSize: 10}},
         yAxis: {type: "value", minInterval: 1, splitLine: {lineStyle: {color: "#edf2f6"}}, axisLabel: {color: "#70869b", fontSize: 10}},
         series: [
-          {name: "普通", type: "line", smooth: true, showSymbol: false, lineStyle: {width: 2, color: "#9aa8b7"}, areaStyle: {color: "rgba(154,168,183,.08)"}, data: data.points.map(function (p) { return p.normal; })},
-          {name: "关注", type: "line", smooth: true, showSymbol: false, lineStyle: {width: 2, color: "#d9a72d"}, areaStyle: {color: "rgba(217,167,45,.08)"}, data: data.points.map(function (p) { return p.watch; })},
-          {name: "风险", type: "line", smooth: true, showSymbol: false, lineStyle: {width: 2, color: "#ca5c5c"}, areaStyle: {color: "rgba(202,92,92,.08)"}, data: data.points.map(function (p) { return p.risk; })}
-        ]
+          {name: "普通", type: "line", smooth: true, showSymbol: false, lineStyle: {width: 2, color: "#9aa8b7"}, areaStyle: {color: "rgba(154,168,183,.08)"}, data: normal},
+          {name: "关注", type: "line", smooth: true, showSymbol: false, lineStyle: {width: 2, color: "#d9a72d"}, areaStyle: {color: "rgba(217,167,45,.08)"}, data: watch},
+          {name: "风险", type: "line", smooth: true, showSymbol: false, lineStyle: {width: 2, color: "#ca5c5c"}, areaStyle: {color: "rgba(202,92,92,.08)"}, data: risk}
+        ],
+        graphic: hasEvents ? [] : [{type: "text", left: "center", top: "middle", style: {text: "当前时间范围内暂无可展示的公开信息事件", fill: "#8193a3", fontSize: 12}}]
       }, true);
+      requestAnimationFrame(function () { if (trendChart) trendChart.resize(); });
     } catch (err) { holder.innerHTML = '<p class="workbench-error">趋势加载失败：' + escapeHtml(err.message) + "</p>"; }
     finally { holder.classList.remove("is-loading"); }
   }
@@ -72,8 +124,8 @@
     relationChart = relationChart || window.echarts.init(holder);
     var centerName = window.ENTITY_NAME || "监测主体";
     var categories = ["监测主体", "股东", "关联方", "供应商", "融资银行", "国家地区", "子公司"];
-    var nodes = [{name:centerName, value:centerName, symbolSize:74, category:0, itemStyle:{color:"#285f8f", borderColor:"#bdd7ed", borderWidth:2}, label:{color:"#143a5b", fontWeight:700}}];
-    rows.forEach(function (row) { nodes.push({name:row.related_name, value:row.related_type, symbolSize:42, category:Math.max(1, categories.indexOf(row.related_type)), itemStyle:{color: row.risk_signal === "风险" ? "#ca6a6a" : row.risk_signal === "关注" ? "#d6ad46" : "#7b9bb8"}}); });
+    var nodes = [{name:centerName, value:centerName, symbolSize:56, category:0, itemStyle:{color:"#285f8f", borderColor:"#bdd7ed", borderWidth:2}, label:{color:"#143a5b", fontWeight:700, fontSize:10}}];
+    rows.forEach(function (row) { nodes.push({name:row.related_name, value:row.related_type, symbolSize:30, category:Math.max(1, categories.indexOf(row.related_type)), itemStyle:{color: row.risk_signal === "风险" ? "#ca6a6a" : row.risk_signal === "关注" ? "#d6ad46" : "#7b9bb8"}}); });
     relationChart.setOption({
       animationDuration: 420,
       animationEasing: "cubicOut",
@@ -81,12 +133,12 @@
       series: [{
         type: "graph", layout: "force", roam: true, draggable: true, data: nodes,
         links: rows.map(function (row) {
-          return {source: centerName, target: row.related_name, label: {show: true, formatter: row.relationship_type, color: "#66829b", fontSize: 10}};
+          return {source: centerName, target: row.related_name, label: {show: true, formatter: row.relationship_type, color: "#66829b", fontSize: 9}};
         }),
         categories: categories.map(function (name) { return {name: name}; }),
-        force: {repulsion: 260, edgeLength: [75, 150]},
+        force: {repulsion: 155, edgeLength: [48, 98]},
         lineStyle: {color: "#9eb8cf", width: 1.2, curveness: .08},
-        label: {show: true, position: "bottom", color: "#355b79", fontSize: 11},
+        label: {show: true, position: "bottom", color: "#355b79", fontSize: 10},
         emphasis: {focus: "adjacency"}
       }]
     }, true);

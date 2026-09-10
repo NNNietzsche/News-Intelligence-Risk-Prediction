@@ -4,7 +4,7 @@
 
 {% block head_extra %}
 {# Modified by DingJiaye: 2026-09-08 — 宏观数据独立页面按需加载，避免日报样式与行情面板相互影响。 #}
-<link rel="stylesheet" href="/static/css/ui/macro-data.css?v=20260908-1" />
+<link rel="stylesheet" href="/static/css/ui/macro-data.css?v=20260910-2" />
 {% endblock %}
 
 {% block page_sidebar %}
@@ -46,8 +46,11 @@
           <div class="macro-quote-list">
             {% if group_code == 'fx' %}
             <div class="macro-cross-rate" id="macro-cross-rate">
-              <div class="macro-cross-copy"><span id="macro-cross-name">人民币 / 日元</span><b id="macro-cross-price">—</b><em id="macro-cross-change">—</em></div>
-              <div class="macro-fx-switch" role="group" aria-label="人民币日元换算方向"><button type="button" class="is-active" data-macro-fx-direction="cny_jpy">人民币 / 日元</button><button type="button" data-macro-fx-direction="jpy_cny">日元 / 人民币</button></div>
+              {# Modified by DingJiaye: 2026-09-10 — 同时展示人民币/日元双向交叉汇率，移除占位较大的切换按钮。 #}
+              {% for direction in ['cny_jpy', 'jpy_cny'] %}
+              {% set rate = macro_fx_cross_rates.get(direction, {}) %}
+              <div class="macro-cross-copy"><span>{{ rate.get('name', '—') }}</span><b>{{ '%.6f'|format(rate.get('price')) if rate.get('price') is not none else '—' }}</b><em class="{% if rate.get('change_pct') is not none and rate.get('change_pct') > 0 %}is-up{% elif rate.get('change_pct') is not none and rate.get('change_pct') < 0 %}is-down{% endif %}">{{ '%+.2f'|format(rate.get('change_pct')) ~ '%' if rate.get('change_pct') is not none else '—' }}</em></div>
+              {% endfor %}
             </div>
             {% endif %}
             {% for quote in quotes %}
@@ -86,7 +89,6 @@
   window.MACRO_FX_CROSS_RATES = {{ macro_fx_cross_rates_json|safe }};
   (function () {
     var source = window.MACRO_MARKET_CHART_DATA || {groups: {}};
-    var rates = window.MACRO_FX_CROSS_RATES || {};
     var charts = [];
     var palette = ["#477ea8", "#78a692", "#bc8a53", "#858faf"];
     function draw(element, group) {
@@ -96,12 +98,10 @@
       lines.forEach(function (line) { line.points.forEach(function (point) { if (labels.indexOf(point.date) === -1) labels.push(point.date); }); });
       labels.sort();
       var chart = window.echarts.init(element, null, {renderer: "canvas"}); charts.push(chart);
-      chart.setOption({animationDuration: 320, animationEasing: "cubicOut", color: palette, tooltip: {trigger: "axis", valueFormatter: function (value) { return value == null ? "—" : Number(value).toFixed(2); }}, grid: {left: 38, right: 12, top: 20, bottom: 36}, xAxis: {type: "category", data: labels, axisLine: {lineStyle: {color: "#cddbe4"}}, axisLabel: {color: "#8093a2", fontSize: 10}}, yAxis: {type: "value", scale: true, axisLine: {show: false}, splitLine: {lineStyle: {color: "#e6edf1"}}, axisLabel: {color: "#8093a2", fontSize: 10}}, series: lines.map(function (line) { var map = {}; line.points.forEach(function (point) { map[point.date] = point.value; }); return {name: line.name, type: "line", smooth: true, showSymbol: false, data: labels.map(function (date) { return map[date] == null ? null : map[date]; }), lineStyle: {width: 2}}; }), legend: {bottom: 0, textStyle: {color: "#687f91", fontSize: 10}, itemWidth: 10, itemHeight: 7}, graphic: !lines.length ? [{type: "text", left: "center", top: "middle", style: {text: "暂未取得足够历史行情", fill: "#8495a3", fontSize: 12}}] : []}, true);
+      chart.setOption({animationDuration: 320, animationEasing: "cubicOut", color: palette, tooltip: {trigger: "axis", valueFormatter: function (value) { return value == null ? "—" : Number(value).toFixed(2); }}, grid: {left: 42, right: 14, top: 20, bottom: 72}, xAxis: {type: "category", data: labels, axisLine: {lineStyle: {color: "#cddbe4"}}, axisLabel: {color: "#8093a2", fontSize: 10, margin: 13, hideOverlap: true, interval: Math.max(0, Math.ceil(labels.length / 6) - 1)}}, yAxis: {type: "value", scale: true, axisLine: {show: false}, splitLine: {lineStyle: {color: "#e6edf1"}}, axisLabel: {color: "#8093a2", fontSize: 10}}, series: lines.map(function (line) { var map = {}; line.points.forEach(function (point) { map[point.date] = point.value; }); return {name: line.name, type: "line", smooth: true, showSymbol: false, data: labels.map(function (date) { return map[date] == null ? null : map[date]; }), lineStyle: {width: 2}}; }), legend: {bottom: 4, left: "center", itemGap: 8, itemWidth: 9, itemHeight: 7, textStyle: {color: "#687f91", fontSize: 9.5}}, graphic: !lines.length ? [{type: "text", left: "center", top: "middle", style: {text: "暂未取得足够历史行情", fill: "#8495a3", fontSize: 12}}] : []}, true);
     }
     ["index", "commodity", "fx"].forEach(function (group) { draw(document.getElementById("macro-market-chart-" + group), group); });
     window.addEventListener("resize", function () { charts.forEach(function (chart) { chart.resize(); }); });
-    function renderCrossRate(direction) { var rate = rates[direction]; if (!rate) return; document.getElementById("macro-cross-name").textContent = rate.name; document.getElementById("macro-cross-price").textContent = Number(rate.price).toFixed(direction === "cny_jpy" ? 4 : 6); var change = document.getElementById("macro-cross-change"); if (rate.change_pct == null) { change.textContent = "—"; change.className = ""; } else { change.textContent = (rate.change_pct >= 0 ? "+" : "") + Number(rate.change_pct).toFixed(2) + "%"; change.className = rate.change_pct >= 0 ? "is-up" : "is-down"; } document.querySelectorAll("[data-macro-fx-direction]").forEach(function (button) { button.classList.toggle("is-active", button.dataset.macroFxDirection === direction); }); }
-    document.querySelectorAll("[data-macro-fx-direction]").forEach(function (button) { button.addEventListener("click", function () { renderCrossRate(button.dataset.macroFxDirection); }); }); renderCrossRate("cny_jpy");
     document.querySelectorAll("[data-macro-refresh], #btn-refresh-market-data").forEach(function (button) { button.addEventListener("click", async function () { var original = button.textContent; button.disabled = true; button.textContent = "正在获取…"; try { var response = await fetch("/api/v1/market-data/refresh", {method: "POST"}); var payload = await response.json(); if (!response.ok) throw new Error(payload.detail || "行情刷新失败"); button.textContent = "已更新 " + payload.updated_count + " 项"; window.setTimeout(function () { window.location.reload(); }, 650); } catch (error) { var state = document.getElementById("macro-market-state"); if (state) state.textContent = error && error.message ? error.message : "刷新失败，请稍后重试。"; button.textContent = "刷新失败"; window.setTimeout(function () { button.textContent = original; button.disabled = false; }, 2200); } }); });
   }());
 </script>

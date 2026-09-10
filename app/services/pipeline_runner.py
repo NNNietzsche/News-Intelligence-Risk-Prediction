@@ -43,7 +43,7 @@ def job_scope(
     codes = sorted({str(c).upper() for c in (module_codes or []) if c})
     if codes == ["A"]:
         return "entity:all"
-    if codes and set(codes) <= {"B", "C", "D"}:
+    if codes and set(codes) <= {"B", "C", "D", "F"}:
         return f"news:{hours}"
     if codes:
         return f"mod:{hours}:{','.join(codes)}"
@@ -570,7 +570,7 @@ def _execute_job(
         )
 
         # 新闻日报三板块跑完后补齐双投镜像，避免模块互清
-        news_codes = [c for c in codes if c in ("B", "C", "D")]
+        news_codes = [c for c in codes if c in ("B", "C", "D", "F")]
         if news_codes and not (errors and all(results.get(c, -1) == -1 for c in news_codes)):
             try:
                 sync_db = SessionLocal()
@@ -631,7 +631,7 @@ def get_last_news_refresh(
 ) -> dict[str, Any]:
     """最近一次新闻采集完成时间（东京 ISO），供界面同步刷新文案。"""
     hours = int(window_hours or NEWS_WINDOW_HOURS_24)
-    codes = [c.upper() for c in (module_codes or ["B", "C", "D"])]
+    codes = [c.upper() for c in (module_codes or list(PAGE_MODULES.get("daily_news", ("B", "C", "D", "F"))))]
     scope = job_scope(module_codes=codes, window_hours=hours)
     running = get_running_job_id(scope)
     db = SessionLocal()
@@ -693,7 +693,7 @@ def news_hour_slot_satisfied(
     规则：同作用域任务进行中，或本小时内已有成功完成的新闻采集 → 视为已满足，整点可跳过。
     """
     hours = int(window_hours or NEWS_WINDOW_HOURS_24)
-    codes = [c.upper() for c in (module_codes or ["B", "C", "D"])]
+    codes = [c.upper() for c in (module_codes or list(PAGE_MODULES.get("daily_news", ("B", "C", "D", "F"))))]
     scope = job_scope(module_codes=codes, window_hours=hours)
     running = get_running_job_id(scope)
     if running:

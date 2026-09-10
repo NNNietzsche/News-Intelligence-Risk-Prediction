@@ -1453,7 +1453,7 @@
       if (userCollectBusy()) return;
       try {
         var hours = currentWindowHours() || 24;
-        var codes = (currentModuleCodes() || []).join(",") || "B,C,D";
+        var codes = (currentModuleCodes() || []).join(",") || "F,B,C,D";
         var resp = await fetch(
           "/api/v1/pipeline/last-refresh?window_hours=" +
             encodeURIComponent(hours) +

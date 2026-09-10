@@ -1,7 +1,7 @@
 """高风险与关联企业公开信息事件的外部预警通知。
 
-支持 SMTP 邮件和企业微信机器人。页面配置使用
-SECRET_KEY 派生密钥加密保存；API 从不回传 Webhook 或 SMTP 密码。
+支持 SMTP 邮件和企业微信机器人。SMTP 传输凭据仅从服务端环境变量读取；
+页面只可维护邮件收件人，API 不会回传 Webhook 或 SMTP 密码。
 Modified by DingJiaye: 2026-08-27.
 """
 
@@ -28,6 +28,10 @@ from app.services.http_client import get_http_client
 
 logger = logging.getLogger(__name__)
 _CHANNELS = ("email", "wecom")
+_SMTP_PLACEHOLDERS = {
+    "", "smtp.example.com", "mail.example.com", "your_smtp_username",
+    "your_smtp_app_password", "risk-intel@example.com",
+}
 
 
 def _fernet() -> Fernet:
@@ -65,9 +69,22 @@ def _env_channel(channel: str) -> dict[str, Any]:
     return {}
 
 
+def _is_real_smtp_value(value: object) -> bool:
+    """排除 .env.example 的占位符，避免页面显示“已配置”但实际无法发信。"""
+    return str(value or "").strip().lower() not in _SMTP_PLACEHOLDERS
+
+
+def _smtp_transport_ready(value: dict[str, Any]) -> bool:
+    """SMTP 传输所需的服务端配置是否完整且不是示例值。"""
+    return all(
+        _is_real_smtp_value(value.get(key))
+        for key in ("smtp_host", "smtp_username", "smtp_password", "smtp_from")
+    )
+
+
 def _channel_ready(channel: str, value: dict[str, Any]) -> bool:
     if channel == "email":
-        return bool(str(value.get("alert_email_to") or "").strip() and str(value.get("smtp_host") or "").strip())
+        return bool(str(value.get("alert_email_to") or "").strip() and _smtp_transport_ready(value))
     return bool(str(value.get("webhook_url") or "").strip())
 
 
@@ -89,6 +106,14 @@ def _policy(db: Session | None = None) -> dict[str, Any]:
 
 def _channel_config(db: Session, channel: str) -> tuple[bool, dict[str, Any]]:
     row = _saved_row(db, channel)
+    # SMTP 是服务端基础设施配置，不允许由页面写入或覆盖。历史库中可能
+    # 留有旧版 SMTP 字段，此处也只读取收件人，避免密码继续参与运行时配置。
+    if channel == "email":
+        env_config = _env_channel(channel)
+        saved = _decode(row.encrypted_config) if row else {}
+        recipient = str(saved.get("alert_email_to") or env_config.get("alert_email_to") or "").strip()
+        config = {**env_config, "alert_email_to": recipient}
+        return (bool(row.enabled) if row else _channel_ready(channel, config)), config
     if row:
         return bool(row.enabled), _decode(row.encrypted_config)
     value = _env_channel(channel)
@@ -128,7 +153,12 @@ def alert_settings_view(db: Session) -> dict[str, Any]:
     for channel in _CHANNELS:
         enabled, config = _channel_config(db, channel)
         if channel == "email":
-            items[channel] = {"enabled": enabled, "configured": _channel_ready(channel, config), "config": {key: config.get(key, "") for key in ("alert_email_to", "smtp_host", "smtp_port", "smtp_username", "smtp_from", "smtp_use_starttls")}, "secret_configured": bool(config.get("smtp_password"))}
+            items[channel] = {
+                "enabled": enabled,
+                "configured": _channel_ready(channel, config),
+                "config": {"alert_email_to": config.get("alert_email_to", "")},
+                "transport_configured": _smtp_transport_ready(config),
+            }
         else:
             items[channel] = {"enabled": enabled, "configured": _channel_ready(channel, config), "config": {}, "secret_configured": bool(config.get("webhook_url"))}
     entities = (
@@ -166,15 +196,11 @@ def save_alert_channel(db: Session, channel: str, *, enabled: bool, config: dict
     if channel not in _CHANNELS:
         raise ValueError("未知通知渠道")
     row = _saved_row(db, channel)
-    existing = _decode(row.encrypted_config) if row else _env_channel(channel)
+    existing = _decode(row.encrypted_config) if row else {}
     merged = dict(existing)
     if channel == "email":
-        for key in ("alert_email_to", "smtp_host", "smtp_port", "smtp_username", "smtp_from", "smtp_use_starttls"):
-            if key in config:
-                merged[key] = config[key]
-        # 空密码意味着保留原值，避免设置页回显或意外清空。
-        if str(config.get("smtp_password") or "").strip():
-            merged["smtp_password"] = str(config["smtp_password"]).strip()
+        # 仅持久化收件人。SMTP 主机、账户、密码与 TLS 均必须在 .env 配置。
+        merged = {"alert_email_to": str(config.get("alert_email_to") or "").strip()}
     else:
         if str(config.get("webhook_url") or "").strip():
             merged["webhook_url"] = str(config["webhook_url"]).strip()
@@ -203,6 +229,11 @@ def _send_email(subject: str, body: str, config: dict[str, Any]) -> None:
     sender = str(config.get("smtp_from") or config.get("smtp_username") or "").strip()
     if not recipients or not sender:
         raise ValueError("邮件收件人或发件人未配置")
+    if not _smtp_transport_ready(config):
+        raise ValueError(
+            "SMTP 未配置有效服务器。请在后端 .env 填写真实 SMTP_HOST、SMTP_USERNAME、"
+            "SMTP_PASSWORD（邮箱应用专用密码）和 SMTP_FROM；不能使用 smtp.example.com 等示例值。"
+        )
     message = MIMEText(body, "plain", "utf-8"); message["Subject"] = Header(subject, "utf-8"); message["From"] = sender; message["To"] = ", ".join(recipients)
     with smtplib.SMTP(str(config.get("smtp_host") or ""), int(config.get("smtp_port") or 587), timeout=15) as client:
         if bool(config.get("smtp_use_starttls", True)): client.starttls()

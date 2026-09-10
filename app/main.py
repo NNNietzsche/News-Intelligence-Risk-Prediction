@@ -746,8 +746,9 @@ def _entity_assessment_context(
     # Modified by DingJiaye: 2026-08-28 — 当前主体的 Agent 任务统计，避免前端重复推导风险口径。
     entity_agent_overview = {
         "events": len(display_risks),
-        # Modified by DingJiaye: 2026-08-28 — 主体页同样统计“关注 + 风险”事件。
-        "alerts": sum(1 for risk in display_risks if getattr(risk, "display_risk_level", risk.risk_level) in {"中", "高", "极高"}),
+        # “需关注”只统计黄色关注；红色风险单列，和趋势图三条序列严格一致。
+        # Modified by DingJiaye: 2026-09-10.
+        "alerts": sum(1 for risk in display_risks if getattr(risk, "display_risk_level", risk.risk_level) == "中"),
         # Modified by DingJiaye: 2026-08-28 — “风险”包含高风险及极高风险，
         # 使用下方公开信息事件相同的展示等级，确保统计与列表一致。
         "risks": sum(1 for risk in display_risks if getattr(risk, "display_risk_level", risk.risk_level) in {"高", "极高"}),
@@ -1037,6 +1038,7 @@ def macro_data_page(
 ):
     """独立宏观数据页：行情与日报新闻分开呈现，均只使用公开数据缓存。"""
     today = tokyo_today()
+    fx_cross_rates = macro_fx_cross_rates(db)
     return templates.TemplateResponse(
         "macro_data.html",
         {
@@ -1047,7 +1049,9 @@ def macro_data_page(
             "page_subtitle": "主流指数、大宗商品与主要汇率公开行情",
             "report_date": today.isoformat(),
             "macro_market_quotes": grouped_latest_market_quotes(db),
-            "macro_fx_cross_rates_json": json.dumps(macro_fx_cross_rates(db), ensure_ascii=False),
+            # Modified by DingJiaye: 2026-09-10 — 同时供模板展示双向交叉汇率和前端图表使用。
+            "macro_fx_cross_rates": fx_cross_rates,
+            "macro_fx_cross_rates_json": json.dumps(fx_cross_rates, ensure_ascii=False),
             "macro_market_chart_json": json.dumps(market_chart_series(db), ensure_ascii=False),
             "pages": PAGE_META,
         },

@@ -1,4 +1,4 @@
-"""新闻日报三板块（B/C/D）自动化分类与路由。
+"""新闻日报板块（交通银行/B/C/D）自动化分类与路由。
 
 规则口径与产品定义一致：企业优先 → 大宗归集 → 地缘门槛 → 双投 [B,D]。
 """
@@ -16,7 +16,34 @@ from typing import Any, Iterable, Optional
 SECTION_B = "B"
 SECTION_C = "C"
 SECTION_D = "D"
-NEWS_SECTIONS = (SECTION_B, SECTION_C, SECTION_D)
+SECTION_F = "F"
+NEWS_SECTIONS = (SECTION_F, SECTION_B, SECTION_C, SECTION_D)
+
+# 交通银行（F）：只追踪与该行直接相关、且已出现负面或需关注信号的公开报道。
+BOCOM_ALIASES: tuple[str, ...] = (
+    "交通银行", "交通银行股份", "交行", "bank of communications", "bankcomm", "bocom", "601328", "3328.hk",
+)
+BOCOM_NEGATIVE_SIGNALS: tuple[str, ...] = (
+    "风险", "处罚", "罚款", "监管", "调查", "诉讼", "违约", "不良贷款", "减值", "亏损", "下滑", "下降",
+    "展期", "逾期", "制裁", "反洗钱", "资本充足率", "流动性", "诈骗", "案件", "冻结", "下调", "警示",
+    "risk", "penalty", "fine", "regulatory", "investigation", "lawsuit", "default", "impairment", "loss", "downgrade",
+)
+
+# F 板块使用“机构一手披露 + 指定可信财经媒体”的封闭信源集，防止搜索结果中的
+# 聚合站、营销号或未署名转载被写入银行专项风险监测。维护：DingJiaye，2026-09-10。
+BOCOM_PRIMARY_DOMAINS: tuple[str, ...] = (
+    "bankcomm.com", "bankofcommunications.com",
+    "sse.com.cn", "hkexnews.hk", "hkex.com.hk",
+    "nfra.gov.cn", "pbc.gov.cn", "csrc.gov.cn", "gov.cn", "court.gov.cn",
+)
+BOCOM_TRUSTED_MEDIA: tuple[str, ...] = (
+    "reuters.com", "caixin.com", "yicai.com", "21jingji.com", "stcn.com",
+)
+BOCOM_TRUSTED_PUBLISHERS: tuple[str, ...] = (
+    "交通银行", "bank of communications", "上海证券交易所", "上交所", "香港交易所", "港交所",
+    "国家金融监督管理总局", "国家金融监管总局", "中国人民银行", "中国证监会", "最高人民法院",
+    "财新", "财新网", "第一财经", "21世纪经济报道", "证券时报", "路透", "reuters",
+)
 
 # 监控企业（含别名；匹配时大小写不敏感）
 MONITOR_COMPANIES: tuple[tuple[str, ...], ...] = (
@@ -303,12 +330,13 @@ LOCAL_ME_POLICY: tuple[str, ...] = (
 )
 
 ROUTING_PROMPT = """你是风险与新闻情报系统的自动化分类与路由引擎。
-根据标题、正文与来源，将条目归入板块 B/C/D（可多选，仅允许双投 B+D）。
+根据标题、正文与来源，将条目归入板块 F/B/C/D（可多选，仅允许双投 B+D）。
 
 板块定义：
 - B 中东日报：严格中东区域全量动态（政策/声明/地缘/区域市场），低门槛。
 - C 日本方面内容：以监控企业（三菱商事、三井物产、伊藤忠、住友商事、丸红、デンソー、日本邮船、大和证券）及其核心业务关联方为主；内容为 IR/开示/经营/监管等财经事项。
 - D 每日宏观与市场情报：全球宏观、大宗（原油/LNG/贵金属等）、美联储/日银/股市，以及可能剧烈冲击金融市场的重大地缘。
+- F 交通银行监测：交通银行及其境内外主体的已公开负面、监管、信用、流动性、诉讼或经营风险信号。
 
 交叉规则（按优先级）：
 1. 主语为监控企业 → 优先 C。
@@ -437,6 +465,16 @@ def is_japan_enterprise_trusted_source(source: str) -> bool:
     )
 
 
+def is_bocom_trusted_source(source: str) -> bool:
+    """交通银行专项仅接受官方、监管司法、交易所和指定财经媒体。"""
+    text = _norm(source).lower()
+    return bool(text) and (
+        _contains_any(text, BOCOM_PRIMARY_DOMAINS)
+        or _contains_any(text, BOCOM_TRUSTED_MEDIA)
+        or _contains_any(text, BOCOM_TRUSTED_PUBLISHERS)
+    )
+
+
 def item_in_module_scope(
     module_code: str,
     *,
@@ -450,7 +488,16 @@ def item_in_module_scope(
     if is_excluded_news_topic(title=title, content=content):
         return False, "排除：非新闻日报主题（娱乐/体育/科普趣味等）"
     if code not in NEWS_SECTIONS:
-        return True, "非新闻三板块，跳过板块校验"
+        return True, "非新闻日报板块，跳过板块校验"
+    blob = _norm(f"{title} {content} {source} {related_company}")
+    if code == SECTION_F:
+        if not _contains_any(blob, BOCOM_ALIASES):
+            return False, "排除：未命中交通银行主体"
+        if not is_bocom_trusted_source(source):
+            return False, "排除：交通银行监测仅保留官方、监管、交易所或指定财经媒体信源"
+        if not _contains_any(blob, BOCOM_NEGATIVE_SIGNALS):
+            return False, "排除：交通银行监测仅保留负面或需关注信号"
+        return True, "命中交通银行及负面/需关注信号，归入 F"
     company = _matched_company(_norm(f"{title} {content} {source}"), related_company)
     if code == SECTION_C:
         if not company:
@@ -519,7 +566,7 @@ def route_news_sections(
     source: str = "",
     related_company: str = "",
 ) -> RouteResult:
-    """按产品规则将一条新闻路由到 B/C/D。
+    """按产品规则将一条新闻路由到 F/B/C/D。
 
     返回 sections 为有序去重后的板块代码；无法判断时默认空（由调用方决定是否保留原模块）。
     """
@@ -531,6 +578,12 @@ def route_news_sections(
     source_n = _norm(source)
     related_n = _norm(related_company)
     blob = f"{title_n} {content_n} {source_n} {related_n}"
+
+    if _contains_any(blob, BOCOM_ALIASES) and _contains_any(blob, BOCOM_NEGATIVE_SIGNALS):
+        return RouteResult(
+            sections=(SECTION_F,),
+            reason="命中交通银行及负面/需关注信号，归入 F",
+        )
 
     # 1) 企业优先
     company = _matched_company(blob, related_n)
@@ -597,7 +650,7 @@ def route_news_sections(
             reason="宏观/市场相关，归入 D",
         )
 
-    return RouteResult(sections=(), reason="未命中 B/C/D 明确规则")
+    return RouteResult(sections=(), reason="未命中新闻日报板块明确规则")
 
 
 def route_structured_row(row: dict[str, Any]) -> RouteResult:

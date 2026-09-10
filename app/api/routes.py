@@ -137,6 +137,7 @@ from app.services.entity_briefing import news_lookback_start
 from app.services.entity_catalog import configured_entity_catalog
 from app.services.entity_relevance import is_monitored_public_event
 from app.services.news_risk_tags import normalize_display_risk_level
+from app.services.news_quality import is_substantive_news_item
 from app.services.industry_analysis import IndustryAnalysisService, IndustryGenerationError
 from app.services.pipeline_runner import (
     get_current_job,
@@ -336,7 +337,13 @@ def send_daily_brief(
     if not result["sent"] and result["failed"]:
         raise HTTPException(status_code=502, detail="简报发送失败，请检查预警设置中的渠道配置。")
     if not result["sent"]:
-        raise HTTPException(status_code=400, detail="尚未启用可用的企业微信或邮件通知渠道。")
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "未发现已启用且可用的通知渠道。请在“预警设置”保存收件人并启用邮件；"
+                "若刚修改 .env，请从当前项目目录重启服务后再试。"
+            ),
+        )
     return {"message": f"今日风险情报概览已发送至 {result['sent']} 个渠道", **result}
 
 
@@ -375,7 +382,7 @@ def refresh_market_data(db: Session = Depends(get_db)):
 @router.get("/entries", response_model=list[RiskEntryOut])
 def list_entries(
     report_date: date | None = Query(None, description="报告日期"),
-    module_code: str | None = Query(None, description="模块：A企业与品牌 / B中东日报 / C日本企业 / D宏观 / E行业"),
+    module_code: str | None = Query(None, description="模块：A企业与品牌 / F交通银行监测 / B中东日报 / C日本企业 / D宏观 / E行业"),
     db: Session = Depends(get_db),
 ):
     q = db.query(DailyRiskEntry).order_by(DailyRiskEntry.created_at.desc())
@@ -461,7 +468,7 @@ def pipeline_job_status(job_id: str):
 def pipeline_running_job(
     window_hours: int | None = Query(None, ge=1, le=168),
     entity_id: int | None = Query(None),
-    module_codes: str | None = Query(None, description="逗号分隔模块，如 B,C,D"),
+    module_codes: str | None = Query(None, description="逗号分隔模块，如 F,B,C,D"),
 ):
     """当前是否有匹配作用域的采集任务（供前端恢复轮询，不阻断其它操作）。"""
     codes = None
@@ -480,7 +487,7 @@ def pipeline_running_job(
 @router.get("/pipeline/last-refresh")
 def pipeline_last_refresh(
     window_hours: int = Query(NEWS_WINDOW_HOURS_24, ge=1, le=168),
-    module_codes: str | None = Query("B,C,D", description="逗号分隔模块"),
+    module_codes: str | None = Query("F,B,C,D", description="逗号分隔模块"),
 ):
     """最近一次新闻采集完成时间（东京），供界面同步刷新文案且不打断操作。"""
     codes = None
@@ -2133,11 +2140,15 @@ def list_entity_risks(
 def entity_risk_trends(
     entity_id: int,
     days: int = Query(30, ge=7, le=90),
+    report_date: date | None = Query(None, description="页面所查看的报告日期，缺省为东京当天"),
     db: Session = Depends(get_db),
 ):
     if not db.get(TargetEntity, entity_id):
         raise HTTPException(status_code=404, detail="主体不存在")
-    end_day = tokyo_today()
+    # 与主体页面使用同一个报告日、同一条“可展示事件”门禁，避免概览统计
+    # 与趋势图因日期或 AI 相关性筛选不同而出现数字不一致。
+    # Modified by DingJiaye: 2026-09-10.
+    end_day = report_date or tokyo_today()
     start_day = end_day - timedelta(days=days - 1)
     rows = (
         db.query(EntityRisk)
@@ -2153,7 +2164,24 @@ def entity_risk_trends(
         (start_day + timedelta(days=index)).isoformat(): {"normal": 0, "watch": 0, "risk": 0, "events": 0}
         for index in range(days)
     }
+    settings = get_settings()
+    use_ai_entity_screening = bool(
+        getattr(settings, "intelligence_agent_entity_screening_enabled", True)
+    )
+    entity = db.get(TargetEntity, entity_id)
+    profile = configured_entity_catalog().find(
+        (entity.name, entity.display_name, entity.aliases)
+    )
     for row in rows:
+        if use_ai_entity_screening:
+            if str(row.relevance or "").lower() not in {"direct", "contextual"}:
+                continue
+        elif not is_monitored_public_event(row, entity=entity, profile=profile):
+            continue
+        if not is_substantive_news_item(
+            {"title": row.title, "summary": row.summary, "url": row.source_url}
+        ):
+            continue
         key = row.report_date.isoformat()
         if key not in buckets:
             continue
@@ -2297,7 +2325,7 @@ def seed_domains(db: Session = Depends(get_db)):
 def export_docx(
     report_date: date = Query(..., description="报告日期"),
     module_codes: str | None = Query(
-        None, description="逗号分隔，如 B,C,D（中东日报/日本企业/宏观）；缺省导出全部"
+        None, description="逗号分隔，如 F,B,C,D（交通银行/中东日报/日本企业/宏观）；缺省导出全部"
     ),
     window_hours: int = Query(
         NEWS_WINDOW_HOURS_24, ge=1, le=168, description="时效窗：24 或 168（7×24）"

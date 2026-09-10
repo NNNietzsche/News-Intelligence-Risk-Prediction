@@ -90,15 +90,15 @@
         </div>
         <span class="daily-summary-meta">{{ daily_summary.entry_count }} 条资讯{% if daily_summary.source == 'deepseek' %} · AI 汇总{% else %} · 自动汇总{% endif %}</span>
       </div>
-      <p class="daily-summary-overview">{{ daily_summary.overview }}</p>
+      <div class="daily-summary-overview"><span>总体判断</span><p>{{ daily_summary.overview }}</p></div>
       <div class="daily-summary-sections">
         {% for section in daily_summary.sections %}
         <article class="daily-summary-section daily-summary-{{ section.code|lower }}">
           <h3>{{ section.name }}</h3>
-          <p>{{ section.summary }}</p>
+          <div class="daily-summary-judgement"><span>风险判断</span><p>{{ section.summary }}</p></div>
           {% if section.important_points %}
           <div class="daily-summary-points">
-            <span>重要事项</span>
+            <span>核心动态</span>
             <ul>{% for point in section.important_points %}<li>{{ point }}</li>{% endfor %}</ul>
           </div>
           {% endif %}

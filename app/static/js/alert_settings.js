@@ -1,6 +1,6 @@
 /*
  * 外部预警通知设置面板。
- * 负责：读取与保存企业微信、邮件通知设置及关联企业筛选；敏感值不从接口回填。
+ * 负责：读取与保存企业微信、邮件收件人及关联企业筛选；SMTP 凭据只在服务端 .env 中维护。
  * Modified by DingJiaye: 2026-08-27.
  */
 (function () {
@@ -54,13 +54,6 @@
     const emailConfig = email.config || {};
     bool("email-enabled", email.enabled);
     value("email-to", emailConfig.alert_email_to);
-    value("smtp-host", emailConfig.smtp_host);
-    value("smtp-port", emailConfig.smtp_port);
-    value("smtp-username", emailConfig.smtp_username);
-    value("smtp-from", emailConfig.smtp_from);
-    bool("smtp-tls", emailConfig.smtp_use_starttls !== false);
-    value("smtp-password", "");
-    $("#smtp-password").placeholder = email.secret_configured ? "已保存；留空保持不变" : "输入 SMTP 密码";
     const wecom = channels.wecom || {};
     bool("wecom-enabled", wecom.enabled);
     value("wecom-webhook", "");
@@ -130,12 +123,7 @@
     const channel = button.dataset.alertSave;
     let config;
     if (channel === "email") {
-      config = {
-        alert_email_to: $("#email-to").value.trim(), smtp_host: $("#smtp-host").value.trim(),
-        smtp_port: Number($("#smtp-port").value || 587), smtp_username: $("#smtp-username").value.trim(),
-        smtp_from: $("#smtp-from").value.trim(), smtp_password: $("#smtp-password").value,
-        smtp_use_starttls: $("#smtp-tls").checked,
-      };
+      config = { alert_email_to: $("#email-to").value.trim() };
     } else {
       config = { webhook_url: $(`#${channel}-webhook`).value.trim() };
     }

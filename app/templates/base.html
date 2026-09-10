@@ -112,20 +112,13 @@
       </section>
 
       <section class="alert-channel-panel" data-alert-panel="email" hidden>
-        <div class="alert-channel-heading"><div><h3>邮件通知</h3><p>支持 SMTP 邮件网关与多个收件人。</p></div><label class="alert-switch"><input id="email-enabled" type="checkbox" /><span></span>启用</label></div>
-        <div class="alert-field-grid">
-          <label class="alert-field wide"><span>收件人</span><input id="email-to" type="text" placeholder="risk@example.com, team@example.com" /></label>
-          <label class="alert-field"><span>SMTP 主机</span><input id="smtp-host" type="text" placeholder="smtp.example.com" /></label>
-          <label class="alert-field"><span>端口</span><input id="smtp-port" type="number" min="1" max="65535" placeholder="587" /></label>
-          <label class="alert-field"><span>用户名</span><input id="smtp-username" type="text" autocomplete="username" /></label>
-          <label class="alert-field"><span>发件人</span><input id="smtp-from" type="email" placeholder="risk@example.com" /></label>
-          <label class="alert-field wide"><span>SMTP 密码</span><input id="smtp-password" type="password" autocomplete="new-password" placeholder="留空则保留已保存密码" /></label>
-        </div>
-        <label class="alert-check"><input id="smtp-tls" type="checkbox" checked /> 使用 STARTTLS</label>
+        <div class="alert-channel-heading"><div><h3>邮件通知</h3><p>填写接收预警的邮箱地址，可用英文逗号分隔多个收件人。</p></div><label class="alert-switch"><input id="email-enabled" type="checkbox" /><span></span>启用</label></div>
+        <label class="alert-field wide"><span>收件人</span><input id="email-to" type="text" placeholder="risk@example.com, team@example.com" /></label>
+        <p class="alert-channel-help">SMTP 主机、账户、密码及加密方式仅由服务端 <code>.env</code> 配置，页面不会读取或保存这些凭据。</p>
         <button class="alert-save-btn" type="button" data-alert-save="email">保存邮件配置</button>
       </section>
 
-      <p class="alert-settings-note">密钥加密保存，页面不会再次显示机器人地址或 SMTP 密码。</p>
+      <p class="alert-settings-note">机器人地址与 SMTP 凭据不会回传至浏览器。</p>
     </div>
   </dialog>
 
@@ -137,7 +130,7 @@
         <button class="alert-settings-close" type="button" data-manual-close="daily" aria-label="关闭">×</button>
       </header>
       <p class="alert-settings-feedback" id="daily-news-feedback" role="status" aria-live="polite"></p>
-      <label class="alert-field"><span>新闻板块</span><select id="daily-news-module"><option value="B">中东日报</option><option value="C">大型企业</option><option value="D">宏观市场</option></select></label>
+      <label class="alert-field"><span>新闻板块</span><select id="daily-news-module"><option value="F">交通银行监测</option><option value="B">中东日报</option><option value="C">大型企业</option><option value="D">宏观市场</option></select></label>
       <label class="alert-field"><span>新闻标题</span><input id="daily-news-title" required maxlength="512" placeholder="输入新闻标题" /></label>
       <label class="alert-field"><span>内容详情</span><textarea id="daily-news-summary" required rows="5" placeholder="粘贴或填写可核验的新闻内容"></textarea></label>
       <div class="alert-field-grid">
