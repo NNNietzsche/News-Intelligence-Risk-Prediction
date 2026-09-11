@@ -529,7 +529,7 @@ body.page-entity_assessment .risk-level-tag.risk-tag-极高::before { animation:
 .entity-trend-panel-primary { margin: 24px 0 18px; padding: 17px 18px 10px; border-top: 1px solid #d9e6f0; background: linear-gradient(90deg, rgba(240,247,252,.72), rgba(255,255,255,0)); }
 .entity-trend-panel-primary .ea-panel-head { margin-bottom: 4px; }
 .entity-trend-panel-primary h3 { margin: 3px 0 0; color: #294e70; font-size: 17px; }
-.entity-trend-panel-primary .entity-workbench-chart { height: 210px; }
+.entity-trend-panel-primary .entity-workbench-chart { height: 210px; min-height: 210px; overflow: hidden; }
 .entity-risk-workbench { display:block; margin:20px 0; }
 .entity-risk-workbench .ea-panel { margin:0; }
 .entity-relation-panel { max-width: 100%; }
@@ -542,12 +542,12 @@ body.page-entity_assessment .risk-level-tag.risk-tag-极高::before { animation:
 .trend-fallback-legend { display:flex; justify-content:flex-end; gap:14px; padding:8px 4px 2px; color:#6f8497; font-size:11px; }
 .trend-fallback-legend span::before { content:""; display:inline-block; width:8px; height:8px; margin-right:5px; border-radius:50%; background:currentColor; }
 .trend-fallback-legend .normal { color:#9aa8b7; }.trend-fallback-legend .watch { color:#c18e17; }.trend-fallback-legend .risk { color:#bd5555; }
-.trend-fallback-svg { display:block; width:100%; height:158px; }.trend-fallback-labels { display:flex; justify-content:space-between; padding:0 24px; color:#7c91a3; font-size:10px; }
+.trend-fallback-svg { display:block; width:100%; height:158px; min-height:158px; }.trend-fallback-labels { display:flex; justify-content:space-between; padding:0 34px; color:#7c91a3; font-size:10px; }
 .review-severity { display:inline-flex; align-items:center; width:max-content; border-radius:999px; padding:2px 6px; font-size:10px; font-weight:800; border:1px solid; }
 .review-severity.neutral { color:#6e7f8f; background:#f2f5f7; border-color:#dce4e9; }
 .review-severity.watch { color:#9a7318; background:#fff6da; border-color:#ecd486; }
 .review-severity.risk { color:#a34646; background:#fdefef; border-color:#edb7b7; }
-.entity-relation-graph { height:168px; border-top:1px solid #e2ebf2; border-bottom:1px solid #e2ebf2; background:radial-gradient(circle at 50% 40%,rgba(221,238,250,.52),transparent 64%); }
+.entity-relation-graph { height:184px; overflow:hidden; border-top:1px solid #e2ebf2; border-bottom:1px solid #e2ebf2; background:radial-gradient(circle at 50% 40%,rgba(221,238,250,.52),transparent 64%); }
 .entity-relation-list { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:10px; max-height:152px; overflow:auto; padding-right:2px; }
 .relation-list-item { display:flex; justify-content:space-between; gap:8px; padding:10px; border:1px solid #e0e8ef; background:#fbfcfd; }
 .relation-list-item strong { display:block; margin-top:5px; color:#2c506f; font-size:12px; }
