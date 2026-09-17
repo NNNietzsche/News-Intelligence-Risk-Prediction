@@ -35,3 +35,26 @@
 .macro-data-rail .mod-name.active { color:#234e76; background:linear-gradient(90deg,#e6f1fa,#f5f9fd); box-shadow:inset 3px 0 0 #5793c7; }
 .macro-data-rail #macro-market-state { color:#7b8f9e; line-height:1.55; }
 @media (max-width:1000px) { .macro-data-page { padding:22px 18px 42px; }.macro-market-groups,.macro-chart-grid { grid-template-columns:1fr; gap:16px; }.macro-quote-group { padding-right:0; border-right:0; }.macro-market-head,.macro-market-trends-head,.macro-data-heading { align-items:flex-start; flex-direction:column; }.macro-market-refresh { width:100%; }.macro-market-trends-head p { max-width:none; text-align:left; }.macro-market-chart { height:210px; } }
+
+/* 手机端宏观数据：报价、汇率方向切换与趋势图分区平铺，避免图例碰撞。
+   Modified by DingJiaye: 2026-09-14. */
+@media (max-width: 600px) {
+  .macro-data-page { padding: 14px 10px 32px; }
+  .macro-data-heading { padding: 0 2px 14px; }
+  .macro-data-heading h1 { font-size: 23px; }
+  .macro-data-heading p,
+  .macro-data-heading time { font-size: 11px; }
+  .macro-market-panel,
+  .macro-market-trends-panel { border-radius: 9px; }
+  .macro-market-panel { padding: 16px 13px 14px; }
+  .macro-market-trends-panel { margin-top: 14px; padding: 16px 13px 12px; }
+  .macro-market-head h2,
+  .macro-market-trends-head h2 { font-size: 20px; }
+  .macro-quote { grid-template-columns: minmax(0, 1fr) auto; gap: 6px; font-size: 13px; }
+  .macro-quote em { grid-column: 2; grid-row: 1; min-width: 49px; font-size: 11px; }
+  .macro-cross-copy { grid-template-columns: minmax(0, 1fr) auto; font-size: 13px; }
+  .macro-cross-copy em { grid-column: 2; grid-row: 1; min-width: 49px; font-size: 11px; }
+  .macro-market-chart { height: 190px; }
+  .macro-chart-lane { padding: 12px 8px 5px; }
+  .macro-market-note { font-size: 11px; }
+}

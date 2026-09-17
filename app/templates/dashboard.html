@@ -4,9 +4,9 @@
 
 {% block page_sidebar %}
 <aside class="sidebar page-rail" data-modules="{{ module_codes_csv }}" data-page-path="{{ page_path }}">
-  {# Modified by DingJiaye: 2026-08-27 — 由情报智能体完成相关性与风险校验，不用浏览器关键词隐藏板块。 #}
+  {# Modified by DingJiaye: 2026-08-27 — 由智能体完成相关性与风险校验，不用浏览器关键词隐藏板块。 #}
   <div class="daily-agent-side-status" aria-label="情报智能体状态">
-    <span aria-hidden="true"></span> AI 情报代理 · 自动核验
+    <span aria-hidden="true"></span> AI 信息代理 · 自动核验
   </div>
   <h2 class="daily-index-title">索引</h2>
   <ul class="run-list daily-index-list" id="daily-index-list">
@@ -63,12 +63,6 @@
         <span class="daily-agent-verified">AI 相关性校验</span>
         <button type="button" class="daily-agent-secondary" data-manual-news-open>添加新闻</button>
         <button type="button" class="daily-agent-primary" data-agent-refresh>更新情报</button>
-      </div>
-      <div class="daily-agent-track" aria-label="智能体处理流程">
-        <span class="is-done"><b>01</b>采集信源</span>
-        <span class="is-done"><b>02</b>识别主体</span>
-        <span class="is-active"><b>03</b>风险推演</span>
-        <span><b>04</b>人工复核</span>
       </div>
       {# Modified by DingJiaye: 2026-08-28 — 合并全局风险概览与 Agent 工作流，减少重复大卡片。 #}
       <div class="agent-overview-inline" id="agent-workflow" aria-labelledby="global-risk-overview">

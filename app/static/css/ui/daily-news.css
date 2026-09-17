@@ -141,13 +141,6 @@
 .daily-agent-quiet:hover { background: #f3f8fc; }
 .daily-agent-primary:hover { background: #355f86; }
 
-.daily-agent-track { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .35rem; margin: .15rem -1.35rem 0; padding: .62rem 1.35rem; border-top: 1px solid #e8eef3; }
-.daily-agent-track span { display: flex; align-items: center; gap: .43rem; color: #9aa9b7; font-size: .74rem; font-weight: 700; }
-.daily-agent-track b { color: #a8b8c7; font-size: .64rem; font-variant-numeric: tabular-nums; }
-.daily-agent-track .is-done { color: #4a7093; }
-.daily-agent-track .is-done b { color: #569079; }
-.daily-agent-track .is-active { color: #37658f; }
-.daily-agent-track .is-active b { color: #5589ba; }
 
 .daily-agent-canvas .daily-summary-report {
   position: relative;
@@ -238,7 +231,6 @@
   .daily-summary-sections { grid-template-columns: 1fr; }
   .daily-agent-hero { grid-template-columns: 1fr; padding: 1rem 1rem 0; }
   .daily-agent-actions { justify-content: flex-start; flex-wrap: wrap; }
-  .daily-agent-track { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: .15rem -1rem 0; padding: .62rem 1rem; }
 }
 /* 灯号等级只由 risk-level-tag 承担；风险类型与“风险提示”保持中性。
    Modified by DingJiaye: 2026-08-28. */
@@ -289,6 +281,32 @@ body.daily-news-ui .risk-level-tag.risk-tag-极高::before { animation: risk-sig
 .risk-events-empty { padding:52px 0; color:#8597a6; text-align:center; }
 @media (max-width:700px) { .risk-events-page { width:calc(100% - 28px); margin-top:24px; } .risk-events-header { align-items:flex-start; flex-direction:column; } .risk-events-item-head { flex-wrap:wrap; } .risk-events-item-head time { width:100%; margin-left:0; } }
 
+/* 手机端日报：把摘要与新闻证据收束为单列，保留板块色与风险灯号。
+   Modified by DingJiaye: 2026-09-14. */
+@media (max-width: 700px) {
+  body.daily-news-ui .daily-agent-canvas { padding: 0; }
+  body.daily-news-ui .daily-agent-hero { margin: 0 0 14px; border-radius: 10px; }
+  body.daily-news-ui .daily-agent-identity { align-items: flex-start; }
+  body.daily-news-ui .daily-agent-mark { flex: 0 0 auto; }
+  body.daily-news-ui .daily-agent-identity p { font-size: .76rem; }
+  body.daily-news-ui .daily-agent-actions { gap: 6px; }
+  body.daily-news-ui .daily-agent-state,
+  body.daily-news-ui .daily-agent-verified { font-size: 11px; }
+  body.daily-news-ui .daily-agent-secondary,
+  body.daily-news-ui .daily-agent-primary { min-height: 34px; padding: .42rem .58rem; font-size: 12px; }
+  body.daily-news-ui .daily-summary-report { margin-bottom: 18px; border-radius: 10px; }
+  body.daily-news-ui .daily-summary-overview { align-items: flex-start; padding: 9px 10px; font-size: 12px; }
+  body.daily-news-ui .daily-summary-section { padding: 13px 13px 13px 16px; border-radius: 8px; }
+  body.daily-news-ui .module-panel { margin-top: 22px; }
+  body.daily-news-ui .module-header { align-items: flex-start; flex-wrap: wrap; gap: 5px; }
+  body.daily-news-ui .module-header h2 { width: 100%; font-size: 20px; }
+  body.daily-news-ui .entry-card.risk-event-card { padding: 15px 13px 14px 16px; border-radius: 9px; }
+  body.daily-news-ui .risk-event-title { padding-right: 0; font-size: 16px; line-height: 1.48; }
+  body.daily-news-ui .entry-card .event-body,
+  body.daily-news-ui .entry-card .news-detail { font-size: 13px; line-height: 1.72; }
+  body.daily-news-ui .risk-event-meta { align-items: flex-start; flex-direction: column; gap: 7px; }
+}
+
 /* 本轮 Command Center 日报深色层已回滚，保留代码仅作后续评估，不参与渲染。
  * Modified by DingJiaye: 2026-08-31. */
 @media not all {
@@ -313,10 +331,6 @@ body.daily-news-ui .daily-summary-head h2,
 body.daily-news-ui .daily-agent-canvas .daily-summary-head h2 { color: #f0f8ff; }
 body.daily-news-ui .daily-agent-identity p,
 body.daily-news-ui .daily-summary-overview { color: #a9c2d3; }
-body.daily-news-ui .daily-agent-track { border-top-color: rgba(132, 190, 224, .19); background: rgba(2, 19, 34, .2); }
-body.daily-news-ui .daily-agent-track span { color: #718da6; }
-body.daily-news-ui .daily-agent-track .is-done,
-body.daily-news-ui .daily-agent-track .is-active { color: #b7dff5; }
 body.daily-news-ui .daily-agent-state { border-color: rgba(96, 205, 171, .36); color: #8ee2bd; background: rgba(21, 92, 76, .22); }
 body.daily-news-ui .daily-agent-quiet { border-color: rgba(127, 196, 232, .32); color: #b9e2f7; background: rgba(9, 39, 63, .58); }
 body.daily-news-ui .daily-agent-primary { border-color: rgba(111, 205, 249, .55); background: linear-gradient(135deg, #287cad, #19527b); }
@@ -350,4 +364,62 @@ body.daily-news-ui .entry-card div { color: #b6ccdb; }
 body.daily-news-ui .entry-card a { color: #8ed6ff; }
 body.daily-news-ui .daily-agent-side-status,
 body.daily-news-ui .module-filter-empty { border-color: rgba(123, 185, 223, .27); color: #a9c5d7; background: rgba(7, 34, 55, .6); }
+}
+
+/* --------------------------------------------------------------------------
+ * Phone reading-width correction
+ * 负责：日报主内容移除桌面侧栏预留与时间线宽度，文章卡片全宽平铺、正文优先阅读。
+ * Modified by DingJiaye: 2026-09-14.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  body.daily-news-ui .app-main,
+  body.daily-news-ui .daily-agent-canvas,
+  body.daily-news-ui .daily-agent-canvas .content,
+  body.daily-news-ui .content {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 12px 10px 34px !important;
+  }
+  body.daily-news-ui .daily-agent-canvas { padding: 0 !important; }
+
+  body.daily-news-ui .module-panel,
+  body.daily-news-ui .entry-grid.risk-event-list,
+  body.daily-news-ui .news-timeline,
+  body.daily-news-ui .timeline-item,
+  body.daily-news-ui .timeline-card,
+  body.daily-news-ui .entry-card.risk-event-card {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+  body.daily-news-ui .entry-grid.risk-event-list { gap: 12px; }
+  body.daily-news-ui .entry-card.risk-event-card,
+  body.daily-news-ui .timeline-card {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+    padding: 16px 14px 16px 19px !important;
+  }
+  body.daily-news-ui .timeline-card { grid-column: 2; grid-row: 2; }
+  body.daily-news-ui .news-timeline { margin: 0 !important; padding-left: 0; }
+  body.daily-news-ui .news-timeline::before { left: 6px; }
+  body.daily-news-ui .timeline-item { grid-template-columns: 16px minmax(0, 1fr); gap: 6px; }
+  body.daily-news-ui .timeline-time { grid-column: 2; grid-row: 1; padding: 0; text-align: left; }
+  body.daily-news-ui .timeline-node { grid-column: 1; grid-row: 1 / span 2; width: 8px; height: 8px; margin: 3px auto 0; }
+
+  body.daily-news-ui .risk-event-title,
+  body.daily-news-ui .timeline-card .risk-event-title {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  body.daily-news-ui .entry-card .event-body,
+  body.daily-news-ui .entry-card .news-detail,
+  body.daily-news-ui .entry-news-detail,
+  body.daily-news-ui .risk-tip {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }

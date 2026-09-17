@@ -575,3 +575,29 @@ body.page-entity_assessment .risk-level-tag.risk-tag-极高::before { animation:
 .workbench-message { margin:0; color:#466f92; font-size:12px; }
 @media (max-width:900px) { .entity-relation-list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:560px) { .workbench-form-grid { grid-template-columns:1fr; } .fin-imported-head { align-items:flex-start; flex-direction:column; } .ea-finance-actions { align-items:flex-end; flex-direction:column; } }
+
+/* 手机端主体评估：趋势与关系图谱优先显示核心节点，横向内容保持可读。
+   Modified by DingJiaye: 2026-09-14. */
+@media (max-width: 700px) {
+  .app-agent-shell .entity-header { margin: 0 0 16px; padding: 16px; border-radius: 10px; }
+  .app-agent-shell .entity-title-row { align-items: flex-start; flex-wrap: wrap; }
+  .app-agent-shell .entity-title { font-size: 25px; line-height: 1.2; }
+  .app-agent-shell .entity-header-tags { gap: 6px; }
+  .app-agent-shell .entity-header-tags > span:not(.credit-status-badge) { padding: 5px 8px; font-size: 11px; }
+  .app-agent-shell .entity-agent-live { margin-top: 12px; }
+  .app-agent-shell .entity-agent-workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app-agent-shell .entity-agent-overview { margin: 0 0 16px; }
+  .app-agent-shell .entity-agent-overview .agent-overview-head { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .app-agent-shell .entity-agent-overview .entity-monitor-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .app-agent-shell .entity-agent-overview .entity-monitor-metrics b { font-size: 24px; }
+  .app-agent-shell .entity-agent-overview .entity-monitor-metrics span,
+  .app-agent-shell .entity-agent-overview .entity-monitor-metrics small { font-size: 10px; }
+  .app-agent-shell .entity-latest-panel,
+  .app-agent-shell .entity-events-section,
+  .app-agent-shell .entity-financial-section { border-radius: 10px; }
+  .entity-trend-panel-primary { margin-top: 16px; padding: 13px 11px 8px; }
+  .entity-trend-panel-primary .entity-workbench-chart { height: 172px; min-height: 172px; }
+  .entity-relation-graph { height: 165px; }
+  .entity-relation-list { grid-template-columns: 1fr; max-height: 200px; }
+  .fin-imported-data { margin-right: -1px; margin-left: -1px; }
+}

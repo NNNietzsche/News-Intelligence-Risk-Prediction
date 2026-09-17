@@ -453,3 +453,583 @@ body.app-agent-shell::after {
   .app-agent-shell .ir-page-header { animation: none !important; }
 }
 }
+
+/* --------------------------------------------------------------------------
+ * Mobile workspace adaptation
+ * 负责：将桌面驾驶舱收束为“顶栏、横向索引、单列内容”的手机工作流，
+ * 保留原有页面与接口，不以缩放桌面页面的方式牺牲可读性。
+ * Modified by DingJiaye: 2026-09-14.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  html,
+  body,
+  body.daily-news-ui {
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .app-agent-shell .top-bar,
+  body.daily-news-ui .top-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    height: auto;
+    min-height: 64px;
+    padding: 8px 14px;
+    row-gap: 7px;
+  }
+
+  .app-agent-shell .brand { min-width: 0; }
+  .app-agent-shell .brand-bank-logo { width: min(270px, 56vw); height: 42px; }
+  .app-agent-shell .main-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    justify-content: flex-start;
+    width: calc(100vw - 28px);
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .app-agent-shell .main-nav::-webkit-scrollbar { display: none; }
+  .app-agent-shell .nav-link { flex: 0 0 auto; padding: 8px 10px; font-size: 13px; }
+  .app-agent-shell .header-tools { grid-column: 2; grid-row: 1; min-width: 0; gap: 6px; }
+  .app-agent-shell .agent-command-trigger { min-width: auto; padding: 8px 9px; }
+  .app-agent-shell .agent-command-trigger small { display: none; }
+  .app-agent-shell .agent-command-trigger span { display: none; }
+  .app-agent-shell .agent-settings-trigger { padding: 8px 9px; font-size: 12px; }
+
+  .app-agent-shell .app-shell,
+  body.daily-news-ui .app-shell {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    width: 100%;
+    height: auto;
+    min-height: calc(100vh - 64px);
+    overflow: visible;
+  }
+
+  .app-agent-shell .app-shell > .page-rail {
+    display: flex;
+    flex: 0 0 auto;
+    order: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    margin: 0;
+    padding: 12px 14px;
+    border-right: 0 !important;
+    border-bottom: 1px solid #dbe6ef;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .app-agent-shell .app-shell > .page-rail::before { display: none; }
+  .app-agent-shell .app-main {
+    flex: 1 1 auto;
+    order: 1;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  body.daily-news-ui .app-main {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    overscroll-behavior: auto;
+  }
+  .app-agent-shell .content-shell,
+  .app-agent-shell .ir-main { box-sizing: border-box; width: 100%; min-height: 0; padding: 16px 14px 40px; }
+
+  .app-agent-shell .page-rail .daily-search { flex: 0 0 auto; width: min(230px, 54vw); }
+  .app-agent-shell .page-rail .daily-index-title { flex: 0 0 auto; margin: 8px 10px 0 0; white-space: nowrap; }
+  .app-agent-shell .page-rail .daily-index-list,
+  .app-agent-shell .page-rail .entity-index-scroll,
+  .app-agent-shell .page-rail .ir-sidebar-body,
+  .app-agent-shell .page-rail .sector-bubble-list,
+  .app-agent-shell .page-rail .report-list {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: row;
+    gap: 7px;
+    min-width: 0;
+    max-height: none;
+    margin: 8px 0 0;
+    padding: 0 0 3px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 0;
+    scrollbar-width: thin;
+  }
+  .app-agent-shell .page-rail .daily-index-list li,
+  .app-agent-shell .page-rail .entity-index-group,
+  .app-agent-shell .page-rail .sector-bubble-row,
+  .app-agent-shell .page-rail .report-list-item { flex: 0 0 auto; }
+  .app-agent-shell .page-rail .mod-name,
+  .app-agent-shell .page-rail .entity-link,
+  .app-agent-shell .page-rail .sector-bubble,
+  .app-agent-shell .page-rail .report-link {
+    width: auto;
+    min-width: max-content;
+    padding: 7px 10px;
+    white-space: nowrap;
+  }
+  .app-agent-shell .page-rail .entity-index-group-head { display: none; }
+  .app-agent-shell .page-rail .entity-list { display: flex; gap: 7px; margin: 0; padding: 0; }
+  .app-agent-shell .page-rail .entity-name-en { display: none; }
+  .app-agent-shell .page-rail .entity-sidebar-footer,
+  .app-agent-shell .page-rail .ir-sidebar-footer { display: none; }
+  .app-agent-shell .daily-sidebar-footer {
+    position: static;
+    width: auto;
+    margin: 10px 0 0;
+    padding: 10px 0 0;
+    background: transparent;
+  }
+  .app-agent-shell .daily-sidebar-actions { display: flex; gap: 8px; width: 100%; }
+  .app-agent-shell .daily-sidebar-actions > * { flex: 1 1 auto; width: auto; min-width: 0; }
+  .app-agent-shell .daily-sidebar-footer .hint { display: none; }
+
+  .app-agent-shell .sources-panel {
+    position: fixed;
+    top: 64px;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    width: min(400px, calc(100vw - 16px));
+    margin: 0;
+    border-radius: 10px 0 0 10px;
+  }
+  .app-agent-shell table { min-width: 680px; }
+  .app-agent-shell .ir-table-wrap,
+  .app-agent-shell .report-table-wrap,
+  .app-agent-shell .fin-imported-data { overflow-x: auto; }
+}
+
+@media (max-width: 560px) {
+  .app-agent-shell .top-bar,
+  body.daily-news-ui .top-bar { padding: 7px 10px; }
+  .app-agent-shell .brand-bank-logo { width: min(205px, 58vw); height: 36px; }
+  .app-agent-shell .agent-settings-trigger { font-size: 0; width: 33px; height: 33px; padding: 0; }
+  .app-agent-shell .agent-settings-trigger::before { content: "⚙"; font-size: 16px; }
+  .app-agent-shell .main-nav { width: calc(100vw - 20px); }
+  .app-agent-shell .nav-link { padding: 7px 9px; font-size: 12px; }
+  .app-agent-shell .content-shell,
+  .app-agent-shell .ir-main { padding: 13px 10px 32px; }
+  .app-agent-shell .page-rail { padding: 10px !important; }
+  .app-agent-shell .page-rail .daily-search { width: 100%; }
+  .app-agent-shell .page-rail .daily-index-title { display: none; }
+  .app-agent-shell .daily-sidebar-actions { flex-wrap: wrap; }
+  .app-agent-shell .daily-sidebar-actions > * { min-height: 38px; }
+  .app-agent-shell .agent-proactive-panel { right: 10px; bottom: 10px; width: min(320px, calc(100vw - 20px)); }
+  .app-agent-shell .agent-command-dialog { width: calc(100vw - 16px); margin-top: 7vh; }
+  .app-agent-shell .agent-command-surface { padding: 16px; }
+  .app-agent-shell .alert-settings-dialog,
+  .app-agent-shell .manual-news-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
+  .app-agent-shell .alert-settings-surface,
+  .app-agent-shell .manual-news-surface { padding: 16px; }
+}
+
+/* Mobile interaction finishing pass.
+ * 负责：统一手机端筛选、弹窗与操作区的触达尺寸；保持主内容优先展示。
+ * Modified by DingJiaye: 2026-09-14.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  .app-agent-shell button,
+  .app-agent-shell input,
+  .app-agent-shell select,
+  .app-agent-shell textarea {
+    max-width: 100%;
+  }
+
+  .app-agent-shell .page-rail .daily-sidebar-footer {
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding: 0 0 0 8px;
+    border: 0;
+  }
+  .app-agent-shell .page-rail .daily-sidebar-actions {
+    width: auto;
+  }
+  .app-agent-shell .page-rail .daily-sidebar-actions > * {
+    width: auto;
+    min-height: 34px;
+    padding: 7px 10px;
+    white-space: nowrap;
+  }
+
+  .app-agent-shell .agent-command-dialog,
+  .app-agent-shell .alert-settings-dialog,
+  .app-agent-shell .manual-news-dialog {
+    width: calc(100vw - 20px);
+    max-width: none;
+    max-height: calc(100dvh - 20px);
+  }
+  .app-agent-shell .agent-command-dialog { margin: 5dvh auto 0; }
+  .app-agent-shell .agent-command-surface,
+  .app-agent-shell .alert-settings-surface,
+  .app-agent-shell .manual-news-surface {
+    gap: 12px;
+    padding: 15px;
+    border-radius: 12px;
+  }
+  .app-agent-shell .agent-command-surface header h2,
+  .app-agent-shell .alert-settings-header h2 {
+    font-size: 18px;
+  }
+  .app-agent-shell .agent-command-suggestions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .app-agent-shell .agent-command-suggestions button {
+    min-height: 38px;
+    text-align: left;
+  }
+  .app-agent-shell .agent-command-surface footer {
+    position: sticky;
+    bottom: -15px;
+    margin: 0 -15px -15px;
+    padding: 12px 15px;
+    background: rgba(8, 34, 55, .98);
+  }
+
+  .app-agent-shell .alert-field-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .app-agent-shell .alert-field input,
+  .app-agent-shell .alert-field select,
+  .app-agent-shell .alert-field textarea {
+    min-height: 42px;
+    font-size: 16px;
+  }
+  .app-agent-shell .manual-news-surface textarea { min-height: 132px; }
+  .app-agent-shell .manual-news-footer {
+    position: sticky;
+    bottom: -15px;
+    z-index: 2;
+    margin: 0 -15px -15px;
+    padding: 12px 15px;
+    background: #f8fbfe;
+  }
+  .app-agent-shell .manual-news-footer .alert-save-btn {
+    min-height: 43px;
+  }
+
+  .app-agent-shell .proactive-panel-dismiss {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-agent-shell .header-tools { gap: 4px; }
+  .app-agent-shell .agent-command-trigger {
+    width: 33px;
+    height: 33px;
+    padding: 0;
+  }
+  .app-agent-shell .agent-command-trigger b { margin: 0; }
+  .app-agent-shell .page-rail .daily-search { width: min(174px, 47vw); }
+  .app-agent-shell .page-rail .daily-sidebar-footer { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+ * Phone header priority pass
+ * 负责：手机端优先呈现品牌、全局导航与 Agent 入口，避免桌面最小宽度导致横向裁切。
+ * Modified by DingJiaye: 2026-09-14.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  .app-agent-shell .top-bar,
+  body.daily-news-ui .top-bar {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 0 !important;
+    min-height: 0;
+    padding: 8px 10px 6px !important;
+    gap: 7px 8px;
+    overflow: hidden;
+  }
+
+  .app-agent-shell .brand {
+    display: block;
+    flex: 1 1 0;
+    min-width: 0 !important;
+    overflow: hidden;
+  }
+  .app-agent-shell .brand-bank-logo {
+    display: block;
+    width: min(235px, 58vw) !important;
+    max-width: 100% !important;
+    height: 35px !important;
+    min-width: 0 !important;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .app-agent-shell .header-tools {
+    display: flex !important;
+    flex: 0 0 auto;
+    min-width: 0 !important;
+    margin-left: auto;
+    gap: 5px;
+  }
+  .app-agent-shell .agent-command-trigger,
+  .app-agent-shell .agent-settings-trigger {
+    display: grid !important;
+    place-items: center;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border-radius: 9px;
+    font-size: 0 !important;
+  }
+  .app-agent-shell .agent-command-trigger span,
+  .app-agent-shell .agent-command-trigger small { display: none !important; }
+  .app-agent-shell .agent-command-trigger b { margin: 0 !important; font-size: 18px; line-height: 1; }
+  .app-agent-shell .agent-settings-trigger::before { content: "⚙"; font-size: 16px; line-height: 1; }
+
+  .app-agent-shell .main-nav {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    flex: 0 0 100%;
+    order: 3;
+    width: 100% !important;
+    margin: 0;
+    padding: 2px 0 0;
+    gap: 0;
+    overflow: visible;
+  }
+  .app-agent-shell .nav-link {
+    display: block;
+    min-width: 0;
+    padding: 8px 2px 7px !important;
+    overflow: hidden;
+    color: #60758a;
+    font-size: 12px !important;
+    line-height: 1.2;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .app-agent-shell .nav-link.active { color: #1c5d8e; }
+}
+
+/* Failsafe: historical dashboard.css hides .main-nav under 820px.
+ * Keep the four primary pages explicitly visible on every phone viewport.
+ * Modified by DingJiaye: 2026-09-14. */
+@media (max-width: 700px) {
+  body.app-agent-shell > header.top-bar > nav.main-nav {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Phone content-flow safeguard
+ * 负责：手机端所有功能页均采用单列、全宽文档流。覆盖历史页面中为桌面
+ * 三栏布局保留的 fixed height / overflow:hidden，避免第二段内容被裁切。
+ * 桌面端不受影响。
+ * Modified by DingJiaye: 2026-09-17.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  html,
+  body.app-agent-shell {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  body.app-agent-shell .app-shell,
+  body.app-agent-shell .app-shell:has(> .page-rail) {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100dvh - 112px);
+    overflow: visible !important;
+  }
+
+  body.app-agent-shell .app-shell > .page-rail {
+    display: flex !important;
+    box-sizing: border-box;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body.app-agent-shell .app-shell > .app-main,
+  body.app-agent-shell .app-main:has(.ir-main) {
+    display: block !important;
+    box-sizing: border-box;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 1px !important;
+    overflow: visible !important;
+  }
+
+  body.app-agent-shell .app-main > main,
+  body.app-agent-shell .content-shell,
+  body.app-agent-shell .industry-agent-canvas,
+  body.app-agent-shell .macro-data-page,
+  body.app-agent-shell .ir-main,
+  body.app-agent-shell .ir-content,
+  body.app-agent-shell .entity-assessment-view {
+    display: block;
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body.app-agent-shell .content-shell { padding: 14px 12px 36px !important; }
+  body.app-agent-shell .entity-assessment-view,
+  body.app-agent-shell .daily-agent-canvas .content { padding: 0 !important; }
+
+  body.app-agent-shell .entity-latest-panel,
+  body.app-agent-shell .entity-events-section,
+  body.app-agent-shell .entity-financial-section,
+  body.app-agent-shell .industry-document-workspace,
+  body.app-agent-shell .report-preview,
+  body.app-agent-shell .ir-table-wrap,
+  body.app-agent-shell .macro-market-panel,
+  body.app-agent-shell .macro-market-trends-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* 桌面版国际评级依赖内部纵向滚动；手机改为页面自然滚动。 */
+  body.app-agent-shell .ir-main,
+  body.app-agent-shell .ir-content { flex: none !important; }
+}
+
+/* --------------------------------------------------------------------------
+ * Mobile header + reading width hardening
+ * 负责：修复日报页历史顶栏固定高度导致主导航被裁切的问题，并保证手机
+ * 端新闻内容采用完整可读宽度。该规则置于样式文件末尾，以覆盖旧版页面规则。
+ * Modified by DingJiaye: 2026-09-17.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  body.app-agent-shell > header.top-bar,
+  body.app-agent-shell.daily-news-ui > header.top-bar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 8px 12px 7px !important;
+    gap: 7px 8px !important;
+    overflow: visible !important;
+  }
+
+  body.app-agent-shell > header.top-bar .brand {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+
+  body.app-agent-shell > header.top-bar .brand-bank-logo {
+    width: min(190px, 51vw) !important;
+    max-width: 100% !important;
+    height: 36px !important;
+  }
+
+  body.app-agent-shell > header.top-bar .header-tools {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+  }
+
+  body.app-agent-shell > header.top-bar > nav.main-nav {
+    display: grid !important;
+    position: static !important;
+    order: 3 !important;
+    flex: 0 0 100% !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 2px 0 0 !important;
+    gap: 0 !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  body.app-agent-shell > header.top-bar > nav.main-nav .nav-link {
+    display: block !important;
+    min-width: 0 !important;
+    padding: 9px 2px 8px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  body.app-agent-shell.daily-news-ui .app-main,
+  body.app-agent-shell.daily-news-ui .daily-agent-canvas,
+  body.app-agent-shell.daily-news-ui .daily-agent-canvas > .content {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.app-agent-shell.daily-news-ui .daily-agent-canvas {
+    padding: 0 !important;
+  }
+
+  body.app-agent-shell.daily-news-ui .daily-agent-canvas > .content {
+    padding: 12px 12px 36px !important;
+  }
+
+  body.app-agent-shell.daily-news-ui .daily-agent-hero,
+  body.app-agent-shell.daily-news-ui .daily-summary-report,
+  body.app-agent-shell.daily-news-ui .module-panel,
+  body.app-agent-shell.daily-news-ui .entry-grid,
+  body.app-agent-shell.daily-news-ui .entry-card {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  body.app-agent-shell.daily-news-ui .daily-agent-hero {
+    grid-template-columns: minmax(0, 1fr) !important;
+    margin: 0 0 14px !important;
+    padding: 16px 14px 0 !important;
+    border-radius: 12px !important;
+  }
+
+  body.app-agent-shell.daily-news-ui .daily-agent-identity,
+  body.app-agent-shell.daily-news-ui .daily-agent-identity > div {
+    min-width: 0 !important;
+  }
+
+  body.app-agent-shell.daily-news-ui .daily-agent-identity p,
+  body.app-agent-shell.daily-news-ui .daily-agent-identity h1 {
+    overflow-wrap: anywhere;
+  }
+
+  body.app-agent-shell.daily-news-ui .daily-agent-actions {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+}

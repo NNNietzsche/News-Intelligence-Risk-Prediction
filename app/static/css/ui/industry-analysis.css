@@ -2779,3 +2779,126 @@ body.daily-news-ui .sidebar .daily-index-title {
     box-shadow: none;
   }
 }
+
+/* Mobile industry workspace adaptation.
+ * 负责：行业资料库页面在手机上保持“索引条 + 全宽工作区 + 侧滑资料栏”，
+ * 避免旧版三栏桌面布局挤压或换行造成内容不可见。
+ * Modified by DingJiaye: 2026-09-14.
+ * -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  body.app-agent-shell .app-shell:has(> .industry-sidebar) {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    height: auto;
+    min-height: calc(100dvh - 64px);
+    overflow: visible;
+  }
+  body.app-agent-shell .app-shell > .industry-sidebar.page-rail {
+    display: flex;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 100%;
+    max-height: none;
+    min-height: 0;
+    padding: 11px 14px;
+    overflow: visible;
+  }
+  body.app-agent-shell .app-shell > .industry-sidebar .daily-index-header {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 6px;
+    margin: 0 8px;
+  }
+  body.app-agent-shell .app-shell > .industry-sidebar .daily-index-list {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  body.app-agent-shell .industry-sidebar .industry-block,
+  body.app-agent-shell .industry-sidebar .industry-history-block {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+  }
+  body.app-agent-shell .industry-sidebar .sector-bubble-list,
+  body.app-agent-shell .industry-sidebar .report-list {
+    margin: 0;
+  }
+  body.app-agent-shell .industry-sidebar .sector-rename-btn,
+  body.app-agent-shell .industry-sidebar .sector-delete-btn,
+  body.app-agent-shell .industry-sidebar .report-rename-btn,
+  body.app-agent-shell .industry-sidebar .report-delete-btn,
+  body.app-agent-shell .industry-sidebar .report-created-at {
+    display: none;
+  }
+  body.app-agent-shell .industry-sidebar .industry-sidebar-footer {
+    display: none;
+  }
+  body.app-agent-shell .app-shell:has(> .industry-sidebar) > .app-main {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  body.app-agent-shell .industry-layout {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+  body.app-agent-shell .industry-sources-panel {
+    top: 64px;
+    width: min(400px, calc(100vw - 14px));
+    max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  body.app-agent-shell .app-shell > .industry-sidebar.page-rail {
+    padding: 9px 10px;
+  }
+  body.app-agent-shell .industry-sidebar .daily-search {
+    width: min(170px, 43vw);
+  }
+  body.app-agent-shell .industry-sidebar .daily-index-header {
+    margin: 0 5px;
+  }
+  body.app-agent-shell .industry-sidebar .industry-breadcrumb-link,
+  body.app-agent-shell .industry-sidebar .industry-breadcrumb-separator {
+    display: none;
+  }
+  body.app-agent-shell .industry-sidebar .daily-index-title {
+    display: block;
+    max-width: 86px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .agent-workbench-header { border-radius: 12px; }
+  .agent-identity { align-items: flex-start; }
+  .agent-identity p { line-height: 1.45; }
+  .agent-header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .agent-header-actions button { min-height: 38px; }
+  .agent-flow { gap: 8px 4px; }
+  .agent-flow li { font-size: .7rem; }
+  .industry-agent-canvas .report-preview { border-radius: 12px; }
+  .notebook-composer,
+  .report-revision-composer { gap: 10px; }
+  .notebook-composer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .notebook-composer .btn,
+  .report-revision-submit { min-height: 42px; }
+}
